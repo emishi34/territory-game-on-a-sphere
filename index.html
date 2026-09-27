@@ -6686,11 +6686,13 @@
     renderLobby();
   }
   function requestRematch(){
-    // A fresh page is the cleanest new board. Settings and this seat carry
-    // over; player 2's page notices the new match and reloads too.
+    // Reload the host with the same fixed room ID so the same URL can be
+    // reused for unlimited rematches.
     try { sessionStorage.setItem(RESET_SETTINGS_KEY, JSON.stringify(collectSettingsValues())); } catch (e){}
     try { sessionStorage.setItem('lr3d_seat', '1'); } catch (e){}
-    location.reload();
+    try { sessionStorage.setItem(FORCE_HOST_KEY, '1'); } catch (e){}
+    if (p2pRoom && typeof p2pRoom.closeForReload === 'function') p2pRoom.closeForReload();
+    setTimeout(() => location.reload(), 120);
   }
 
   // ---------- settings travel as one flat array, in menu order ----------
@@ -7652,10 +7654,17 @@
     netReconnectBtnEl.textContent = 'オンラインに再接続';
   }
 
+  // A single, fixed PeerJS ID is used for the normal entry URL.
+  // Whoever opens the URL first becomes the host; later visitors become guests.
+  // The ID is only a rendezvous name on PeerJS Cloud, not a game-data server.
+  const FIXED_ROOM_ID = 'emishi34-territory-game-room-v1';
+  const FORCE_HOST_KEY = 'lr3d_force_fixed_host';
+
   class PublicP2PRoom {
     constructor(hostId){
-      this.isHost = !hostId;
-      this.hostId = hostId || null;
+      this.fixedRoom = !hostId;
+      this.isHost = false;
+      this.hostId = hostId || FIXED_ROOM_ID;
       this.peer = null;
       this.conn = null;
       this.ownPresence = {};
@@ -7670,6 +7679,13 @@
       this.destroyed = false;
       this.lastError = '';
       this.reconnecting = false;
+      this.fixedHostClaiming = false;
+      this.forceHost = false;
+      this.forceHostAttempts = 0;
+      try {
+        this.forceHost = sessionStorage.getItem(FORCE_HOST_KEY) === '1';
+        if (this.forceHost) sessionStorage.removeItem(FORCE_HOST_KEY);
+      } catch (e){}
     }
     onConnection(ok, fail){ this.connCb = ok; this.errCb = fail; }
     onPeers(cb, fail){ this.peersCb = cb; this.errCb = fail; this.emitPeers(); }
@@ -7679,6 +7695,8 @@
     }
     async start(){
       await this.ensurePeerLibrary();
+      if (this.fixedRoom) return this.createFixedRoomPeer();
+      this.isHost = false;
       return this.createPeer();
     }
     ensurePeerLibrary(){
@@ -7693,16 +7711,41 @@
         document.head.appendChild(sc);
       });
     }
-    createPeer(){
+    createPeer(id){
       if (!window.Peer) throw new Error('PeerJSの読み込みに失敗しました');
       clearTimeout(this.retryTimer);
       this.destroyed = false;
       this.opened = false;
       this.remoteOpen = false;
       this.reconnecting = false;
-      this.peer = new Peer({ debug: 1 });
+      this.peer = id ? new Peer(id, { debug: 1 }) : new Peer({ debug: 1 });
       this.bindPeerEvents();
       return Promise.resolve();
+    }
+    createFixedRoomPeer(){
+      // First visitor claims the well-known ID. If it is already occupied,
+      // this browser becomes player 2 and connects to that fixed ID.
+      this.isHost = true;
+      this.hostId = FIXED_ROOM_ID;
+      this.fixedHostClaiming = true;
+      this.createPeer(FIXED_ROOM_ID);
+      return Promise.resolve();
+    }
+    switchFixedHostToGuest(){
+      if (!this.fixedRoom || !this.fixedHostClaiming) return;
+      this.fixedHostClaiming = false;
+      this.isHost = false;
+      this.hostId = FIXED_ROOM_ID;
+      try { if (this.peer && !this.peer.destroyed) this.peer.destroy(); } catch (e){}
+      this.peer = null;
+      this.opened = false;
+      this.remoteOpen = false;
+      // Use a normal random Peer ID for the guest.
+      setTimeout(() => {
+        if (this.destroyed) return;
+        try { this.createPeer(); }
+        catch (e){ this.lastError = netErrorText(e); this.scheduleReconnect(); }
+      }, 50);
     }
     bindPeerEvents(){
       this.peer.on('open', (id) => {
@@ -7713,10 +7756,13 @@
         if (this.isHost){
           this.hostId = id;
           const u = new URL(location.href);
-          u.searchParams.set('room', id);
+          if (this.fixedRoom) u.search = '';
+          else u.searchParams.set('room', id);
           shareUrlEl.value = u.toString();
           shareBoxEl.classList.remove('hidden');
-          shareStatusEl.textContent = 'オンライン接続中。相手がこのURLを開くと水色陣営に参加できます。';
+          shareStatusEl.textContent = this.fixedRoom
+            ? 'オンライン接続中。このURLを保存しておけば、次回以降も同じURLで対戦できます。'
+            : 'オンライン接続中。相手がこのURLを開くと水色陣営に参加できます。';
           this.emitPeers();
           this.connCb && this.connCb({host:true});
         } else {
@@ -7744,6 +7790,27 @@
         if (type === 'network' || type === 'socket-error' || type === 'socket-closed' || type === 'disconnected' || type === 'server-error'){
           showNetRetry(this.lastError + '。再接続しています…');
           this.scheduleReconnect();
+          return;
+        }
+        if (type === 'unavailable-id' && this.fixedHostClaiming){
+          if (this.forceHost && this.fixedRoom && this.forceHostAttempts < 12){
+            // The host is refreshing for a rematch. Give the old PeerJS ID a
+            // few seconds to be released before giving up and joining as guest.
+            this.fixedHostClaiming = false;
+            try { if (this.peer && !this.peer.destroyed) this.peer.destroy(); } catch (e){}
+            this.peer = null;
+            this.forceHostAttempts++;
+            setTimeout(() => {
+              if (this.destroyed) return;
+              this.fixedHostClaiming = true;
+              this.isHost = true;
+              this.hostId = FIXED_ROOM_ID;
+              this.createPeer(FIXED_ROOM_ID);
+            }, 1000);
+          } else {
+            // The fixed room name is already owned: this visitor becomes a guest.
+            this.switchFixedHostToGuest();
+          }
           return;
         }
         if (type === 'peer-unavailable'){
@@ -7774,9 +7841,14 @@
           return;
         }
         if (this.peer.destroyed){
-          // A destroyed peer cannot be reconnected. Recreate it. For guests,
-          // the hostId remains the same; for hosts a new share URL is issued.
-          this.createPeer();
+          // A destroyed peer cannot be reconnected. In the fixed room, hosts
+          // reclaim the well-known ID; guests get a fresh random ID.
+          if (this.fixedRoom && this.isHost){
+            this.fixedHostClaiming = true;
+            this.createPeer(FIXED_ROOM_ID);
+          } else {
+            this.createPeer();
+          }
           return;
         }
         if (!this.isHost && !this.remoteOpen) this.connectToHost();
@@ -7852,10 +7924,21 @@
         try { this.peer.reconnect(); return; } catch (e){}
       }
       if (!this.peer || this.peer.destroyed){
-        this.createPeer();
+        if (this.fixedRoom && this.isHost){
+          this.fixedHostClaiming = true;
+          this.createPeer(FIXED_ROOM_ID);
+        } else {
+          this.createPeer();
+        }
       } else if (!this.isHost && !this.remoteOpen){
         this.connectToHost();
       }
+    }
+    closeForReload(){
+      clearTimeout(this.retryTimer);
+      this.destroyed = true;
+      try { if (this.conn) this.conn.close(); } catch (e){}
+      try { if (this.peer && !this.peer.destroyed) this.peer.destroy(); } catch (e){}
     }
   }
 
@@ -7898,14 +7981,14 @@
         renderLobby();
       });
       await room.start();
-      if (hostId){
+      if (room.isHost){
+        // The first visitor to the fixed URL becomes player 1.
+        setTimeout(() => { if (!NET.seat && !NET.offline) claimSeat(1); }, 300);
+      } else {
         shareBoxEl.classList.add('hidden');
         lobbyStatusEl.textContent = 'プレイヤー1へ接続しています…';
-        // Anyone opening the shared room URL is automatically player 2.
+        // Anyone else opening the same URL automatically becomes player 2.
         setTimeout(() => { if (!NET.seat && !NET.offline) claimSeat(2); }, 800);
-      } else {
-        // The room creator is automatically player 1.
-        setTimeout(() => { if (!NET.seat && !NET.offline) claimSeat(1); }, 300);
       }
       renderLobby();
     } catch (e){
