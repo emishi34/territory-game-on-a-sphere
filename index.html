@@ -89,6 +89,9 @@
     gap: 10px;
     z-index: 10;
   }
+  #bottomPanels.collapsed #settingsPanel,
+  #bottomPanels.collapsed #spawnInfoPanel { display: none !important; }
+  #panelCollapseBtn { margin-left: 6px; }
   #settingsPanel {
     width: min(92vw, 380px);
     max-height: 46vh;
@@ -196,22 +199,6 @@
 
   .hidden { display: none !important; }
 
-  #armedCardBadge {
-    position: fixed;
-    top: max(70px, calc(env(safe-area-inset-top) + 70px));
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(191,239,255,0.16);
-    border: 1px solid rgba(191,239,255,0.6);
-    color: #eafcff;
-    font-size: 13px;
-    padding: 7px 16px;
-    border-radius: 999px;
-    z-index: 12;
-    pointer-events: none;
-    white-space: nowrap;
-  }
-
   #panelTabs {
     display: flex;
     gap: 6px;
@@ -231,11 +218,6 @@
     border-color: transparent;
   }
 
-  #abilityPanel {
-    display: flex;
-    gap: 10px;
-    touch-action: auto;
-  }
   #spawnInfoPanel {
     width: min(92vw, 380px);
     max-height: 46vh;
@@ -270,47 +252,6 @@
     color: rgba(255,255,255,0.8);
   }
   .spawnInfoRow span:last-child { font-variant-numeric: tabular-nums; color: #fff; }
-  .cardCooldown {
-    font-size: 11px;
-    color: #ffd166;
-    font-variant-numeric: tabular-nums;
-    min-height: 1.1em;
-  }
-  .abilityCard.onCooldown { opacity: 0.45; }
-  .abilityCard.onCooldown .cardName { color: rgba(255,255,255,0.6); }
-  .abilityCard {
-    width: 74px;
-    height: 104px;
-    border-radius: 10px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    padding: 6px;
-    background: rgba(22,22,28,0.85);
-    border: 2px solid rgba(255,255,255,0.2);
-    color: #fff;
-    touch-action: none;
-    user-select: none;
-    box-shadow: 0 4px 14px rgba(0,0,0,0.35);
-  }
-  .abilityCard.skillCard { border-color: #5ac8ff; }
-  .abilityCard.strongCard { border-color: #ffcc4d; box-shadow: 0 4px 18px rgba(255,204,77,0.25); }
-  .abilityCard .cardType {
-    font-size: 9.5px;
-    letter-spacing: 0.05em;
-    opacity: 0.75;
-  }
-  .abilityCard.skillCard .cardType { color: #7fd6ff; }
-  .abilityCard.strongCard .cardType { color: #ffdc7f; }
-  .abilityCard .cardName {
-    font-size: 13px;
-    font-weight: 600;
-    text-align: center;
-    line-height: 1.3;
-  }
-
   #radialMenu {
     position: fixed;
     left: 0; top: 0;
@@ -423,6 +364,9 @@
     color: #fff;
   }
   #lobbyCard h1 { margin: 0 0 4px; font-size: 21px; letter-spacing: 0.02em; }
+  #inviteRow { display: flex; gap: 8px; margin: 12px 0 4px; }
+  #inviteUrl { flex: 1; min-width: 0; font-size: 12px; padding: 8px 10px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.18); background: rgba(0,0,0,0.35); color: #fff; }
+  #copyInviteBtn { flex: none; width: auto; margin: 0; padding: 8px 14px; }
   #lobbyStatus { font-size: 12.5px; color: rgba(255,255,255,0.6); margin-bottom: 14px; line-height: 1.55; }
   .seatRow {
     display: flex; align-items: center; gap: 10px;
@@ -490,7 +434,6 @@
   <div id="lobbyCard">
     <h1>進路 オンライン対戦</h1>
     <div id="lobbyStatus">接続しています…</div>
-    <button class="lobbyBtn hidden" id="netReconnectBtn" type="button" style="margin-top:8px;">オンラインに再接続</button>
     <div class="seatRow p1">
       <div class="seatInfo"><div class="seatName">プレイヤー1 ピンク陣営</div><div class="seatState" id="seat1State">空き</div></div>
       <button class="lobbyBtn" id="seat1Btn">参加する</button>
@@ -500,44 +443,18 @@
       <button class="lobbyBtn" id="seat2Btn">参加する</button>
     </div>
     <button class="lobbyBtn" id="startBtn" disabled>試合開始</button>
-    <div id="lobbyNote">1試合6分。終了時に陣地の面積が広い陣営の勝ちです。<br>相手にもこのページを開いてもらい、空いている席に参加してもらってください。試合はプレイヤー1の端末で進行するので、プレイヤー1は試合中この画面を開いたままにしてください。</div>
-    <div id="shareBox" class="hidden" style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.1);">
-      <div style="font-size:12px;color:rgba(255,255,255,.65);margin-bottom:6px;">このURLを相手に送ってください</div>
-      <div style="display:flex;gap:6px;">
-        <input id="shareUrl" readonly style="min-width:0;flex:1;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);border-radius:9px;color:#fff;font-size:11px;padding:8px;">
-        <button id="copyShareBtn" class="lobbyBtn" type="button">コピー</button>
-      </div>
-      <div id="shareStatus" style="font-size:11px;color:rgba(255,255,255,.45);margin-top:5px;">相手がこのURLを開くと水色陣営に参加できます。</div>
-    </div>
-
+    <div id="inviteRow"><input id="inviteUrl" readonly aria-label="招待リンク"><button class="lobbyBtn" id="copyInviteBtn">コピー</button></div>
+    <div id="lobbyNote">1試合6分。終了時に陣地の面積が広い陣営の勝ちです。<br>上の招待リンクを相手に送り、開いてもらって空いている席に参加してもらってください(ログイン不要)。試合はプレイヤー1の端末で進行するので、プレイヤー1は試合中この画面を開いたままにしてください。</div>
   </div>
 </div>
-<div id="armedCardBadge" class="hidden"></div>
 <div id="bottomPanels">
   <div id="panelTabs">
     <button id="tabSliders" class="panelTabBtn active">設定</button>
-    <button id="tabAbilities" class="panelTabBtn">アビリティ</button>
     <button id="tabSpawnInfo" class="panelTabBtn">湧き率</button>
+    <button id="panelCollapseBtn" class="panelTabBtn" aria-label="パネルをしまう">▼ しまう</button>
   </div>
   <div id="settingsPanel">
     <div id="settingsScroll"></div>
-  </div>
-  <div id="abilityPanel" class="hidden">
-    <div class="abilityCard strongCard" id="card_giant_meteor">
-      <div class="cardType">強スキル</div>
-      <div class="cardName">巨大隕石</div>
-      <div class="cardCooldown" id="cooldown_giant_meteor"></div>
-    </div>
-    <div class="abilityCard strongCard" id="card_light_pillar">
-      <div class="cardType">強スキル</div>
-      <div class="cardName">光の柱</div>
-      <div class="cardCooldown" id="cooldown_light_pillar"></div>
-    </div>
-    <div class="abilityCard strongCard" id="card_poison_rain">
-      <div class="cardType">強スキル</div>
-      <div class="cardName">毒の雨</div>
-      <div class="cardCooldown" id="cooldown_poison_rain"></div>
-    </div>
   </div>
   <div id="spawnInfoPanel" class="hidden">
     <div id="spawnInfoScroll"></div>
@@ -546,7 +463,230 @@
 <div id="radialMenu"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.5/dist/peerjs.min.js"></script>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script>
+// ===== PeerJS room: anyone who opens the same link joins the same room =====
+// One tab in the room acts as a relay ("hub", PeerJS id lr3d-<room>); every
+// other tab connects to it. The hub forwards each tab's presence object to
+// everyone. If the hub tab leaves, the remaining tabs elect a new one.
+// Exposes the same small API the game used before: presence(), onPeers(),
+// onConnection(), connected().
+window.createPeerRoom = function(roomCode){
+  const HUB_ID = 'lr3d-v1-' + roomCode;
+  const PEER_OPTS = { debug: 0, config: { iceServers: [
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun1.l.google.com:19302' }
+  ] } };
+  let peer = null, isHub = false, myId = null;
+  let hubConn = null;                 // client side: connection to the hub
+  const clients = new Map();          // hub side: id -> {conn, last}
+  let others = {};                    // id -> presence (everyone but me)
+  let myPresence = Object.freeze({});
+  let isConnected = false, destroyed = false;
+  let lastHubMsg = 0;
+  const peerHandlers = [], connHandlers = [];
+  let fatal = null;
+
+  function setConnected(v){
+    if (v === isConnected) return;
+    isConnected = v;
+    for (const h of connHandlers) try { h.fn(v); } catch (e){}
+  }
+  let peersScheduled = false;
+  function emitPeers(){
+    if (peersScheduled) return;
+    peersScheduled = true;
+    setTimeout(() => {
+      peersScheduled = false;
+      const list = [];
+      if (myId) list.push({ peer: myId, presence: myPresence, kind: 'viewer', isMe: true, sameTab: true, guest: false, by: null });
+      for (const id in others) list.push({ peer: id, presence: others[id], kind: 'viewer', isMe: false, sameTab: false, guest: false, by: null });
+      const change = { peers: list };
+      for (const h of peerHandlers) try { h.fn(change); } catch (e){}
+    }, 0);
+  }
+  function safeSend(conn, msg){ try { if (conn && conn.open) conn.send(msg); } catch (e){} }
+  function hubBroadcast(msg, exceptId){
+    for (const [id, c] of clients) if (id !== exceptId) safeSend(c.conn, msg);
+  }
+
+  // ---- sending my presence (coalesced, ~30/s max) ----
+  let sendTimer = null, lastSendAt = 0;
+  function scheduleSend(){
+    if (sendTimer) return;
+    const wait = Math.max(0, 33 - (performance.now() - lastSendAt));
+    sendTimer = setTimeout(() => { sendTimer = null; lastSendAt = performance.now(); sendMine(); }, wait);
+  }
+  function sendMine(){
+    if (!myId) return;
+    if (isHub) hubBroadcast({ t: 'u', id: myId, p: myPresence });
+    else safeSend(hubConn, { t: 'p', p: myPresence });
+  }
+
+  // ---- becoming the hub / joining the hub ----
+  function cleanupPeer(){
+    try { if (hubConn) hubConn.close(); } catch (e){}
+    hubConn = null;
+    for (const c of clients.values()) try { c.conn.close(); } catch (e){}
+    clients.clear();
+    try { if (peer) peer.destroy(); } catch (e){}
+    peer = null; isHub = false; myId = null;
+  }
+  let attempt = 0, retryTimer = null;
+  function retry(delay){
+    if (destroyed) return;
+    clearTimeout(retryTimer);
+    setConnected(false);
+    retryTimer = setTimeout(tryBecomeHub, delay);
+  }
+  function tryBecomeHub(){
+    if (destroyed) return;
+    cleanupPeer();
+    others = {};
+    attempt++;
+    let p;
+    try { p = new Peer(HUB_ID, PEER_OPTS); } catch (e){ fail('Peer: ' + e.message); return; }
+    peer = p;
+    p.on('open', (id) => {
+      if (peer !== p) return;
+      isHub = true; myId = id; attempt = 0;
+      setConnected(true);
+      emitPeers();
+    });
+    p.on('connection', (conn) => {
+      if (peer !== p || !isHub) return;
+      conn.on('open', () => {
+        clients.set(conn.peer, { conn, last: performance.now() });
+        const all = {};
+        for (const id in others) all[id] = others[id];
+        all[myId] = myPresence;
+        safeSend(conn, { t: 'full', peers: all });
+      });
+      conn.on('data', (m) => {
+        const c = clients.get(conn.peer);
+        if (c) c.last = performance.now();
+        if (!m || typeof m !== 'object') return;
+        if (m.t === 'p' && m.p && typeof m.p === 'object'){
+          others[conn.peer] = Object.freeze(m.p);
+          hubBroadcast({ t: 'u', id: conn.peer, p: m.p }, conn.peer);
+          emitPeers();
+        }
+      });
+      const gone = () => dropClient(conn.peer, conn);
+      conn.on('close', gone);
+      conn.on('error', gone);
+    });
+    p.on('disconnected', () => { if (peer === p && !p.destroyed) try { p.reconnect(); } catch (e){} });
+    p.on('error', (err) => {
+      if (peer !== p) return;
+      if (err && err.type === 'unavailable-id'){ joinAsClient(); return; }
+      if (isHub && err && (err.type === 'network' || err.type === 'server-error' || err.type === 'socket-error' || err.type === 'socket-closed')) return; // keep relaying existing players
+      if (err && err.type === 'browser-incompatible'){ fail('このブラウザはWebRTCに対応していません'); return; }
+      retry(Math.min(8000, 800 * attempt));
+    });
+  }
+  function dropClient(id, conn){
+    const c = clients.get(id);
+    if (!c || (conn && c.conn !== conn)) return;
+    clients.delete(id);
+    delete others[id];
+    hubBroadcast({ t: 'l', id });
+    emitPeers();
+  }
+  function joinAsClient(){
+    if (destroyed) return;
+    cleanupPeer();
+    let p;
+    try { p = new Peer(PEER_OPTS); } catch (e){ fail('Peer: ' + e.message); return; }
+    peer = p;
+    p.on('open', (id) => {
+      if (peer !== p) return;
+      myId = id;
+      const conn = p.connect(HUB_ID, { reliable: true, serialization: 'json' });
+      hubConn = conn;
+      const openTimer = setTimeout(() => { if (hubConn === conn && !conn.open) retry(300 + Math.random() * 700); }, 12000);
+      conn.on('open', () => {
+        clearTimeout(openTimer);
+        lastHubMsg = performance.now();
+        attempt = 0;
+        safeSend(conn, { t: 'p', p: myPresence });
+      });
+      conn.on('data', (m) => {
+        if (hubConn !== conn) return;
+        lastHubMsg = performance.now();
+        if (!m || typeof m !== 'object') return;
+        if (m.t === 'full' && m.peers){
+          others = {};
+          for (const id in m.peers) if (id !== myId) others[id] = Object.freeze(m.peers[id] || {});
+          setConnected(true);
+          emitPeers();
+        } else if (m.t === 'u' && m.id && m.id !== myId){
+          others[m.id] = Object.freeze(m.p || {});
+          emitPeers();
+        } else if (m.t === 'l' && m.id){
+          delete others[m.id];
+          emitPeers();
+        }
+      });
+      const lost = () => { if (hubConn === conn){ hubConn = null; retry(200 + Math.random() * 900); } };
+      conn.on('close', lost);
+      conn.on('error', lost);
+    });
+    p.on('disconnected', () => { if (peer === p && !p.destroyed) try { p.reconnect(); } catch (e){} });
+    p.on('error', (err) => {
+      if (peer !== p) return;
+      // The hub id vanished (hub left): try to take over.
+      if (err && err.type === 'peer-unavailable'){ retry(100 + Math.random() * 600); return; }
+      if (err && err.type === 'browser-incompatible'){ fail('このブラウザはWebRTCに対応していません'); return; }
+      if (hubConn && hubConn.open && err && (err.type === 'network' || err.type === 'server-error' || err.type === 'socket-error' || err.type === 'socket-closed')) return;
+      attempt++;
+      retry(Math.min(8000, 800 * attempt));
+    });
+  }
+  // Keepalive + dead-connection detection.
+  setInterval(() => {
+    if (destroyed || !myId) return;
+    const now = performance.now();
+    if (isHub){
+      hubBroadcast({ t: 'k' });
+      for (const [id, c] of clients) if (now - c.last > 9000) { try { c.conn.close(); } catch (e){} dropClient(id); }
+    } else if (hubConn && hubConn.open){
+      safeSend(hubConn, { t: 'p', p: myPresence });
+      if (now - lastHubMsg > 9000){ hubConn = null; retry(100 + Math.random() * 600); }
+    }
+  }, 2500);
+  function fail(msg){
+    if (fatal) return;
+    fatal = { code: 'peer', message: msg };
+    destroyed = true;
+    cleanupPeer();
+    for (const h of peerHandlers) if (h.err) try { h.err(fatal); } catch (e){}
+    for (const h of connHandlers) if (h.err) try { h.err(fatal); } catch (e){}
+  }
+  window.addEventListener('pagehide', () => { destroyed = true; cleanupPeer(); });
+
+  if (typeof Peer !== 'function'){
+    setTimeout(() => fail('通信ライブラリ(PeerJS)を読み込めませんでした'), 0);
+  } else {
+    tryBecomeHub();
+  }
+
+  return {
+    presence(patch){
+      const next = Object.assign({}, myPresence);
+      for (const k in patch){ if (patch[k] === null) delete next[k]; else next[k] = patch[k]; }
+      myPresence = Object.freeze(next);
+      emitPeers();
+      scheduleSend();
+      return Promise.resolve();
+    },
+    onPeers(fn, err){ const h = { fn, err }; peerHandlers.push(h); if (fatal && err) setTimeout(() => err(fatal), 0); else emitPeers(); return () => { const i = peerHandlers.indexOf(h); if (i >= 0) peerHandlers.splice(i, 1); }; },
+    onConnection(fn, err){ const h = { fn, err }; connHandlers.push(h); setTimeout(() => { if (fatal){ if (err) err(fatal); } else fn(isConnected); }, 0); return () => { const i = connHandlers.indexOf(h); if (i >= 0) connHandlers.splice(i, 1); }; },
+    connected(){ return isConnected; }
+  };
+};
+
+</script>
 <script>
 (function(){
   const canvas = document.getElementById('stage');
@@ -590,8 +730,10 @@
   // Base fill light is kept fairly soft; the key light is aligned with the
   // fixed Sun direction below so the visible lighting and the custom
   // day/night terminator agree with each other.
-  scene.add(new THREE.AmbientLight(0xffffff, 0.55));
-  const keyLight = new THREE.DirectionalLight(0xffffff, 0.9);
+  // (Toned down: ambient 0.55 + key 0.9 on the near-white globe pushed the
+  // lit side past full white, so it looked like it was glowing.)
+  scene.add(new THREE.AmbientLight(0xffffff, 0.4));
+  const keyLight = new THREE.DirectionalLight(0xffffff, 0.68);
   keyLight.position.set(4, 5, 6); // updated every frame to follow the Sun (updateCelestialBodies)
   scene.add(keyLight);
   const fillLight = new THREE.DirectionalLight(0xffffff, 0.08);
@@ -651,7 +793,7 @@
     const c = document.createElement('canvas');
     c.width = SPHERE_TEX_W; c.height = SPHERE_TEX_H;
     const g = c.getContext('2d');
-    g.fillStyle = '#f7f7f9';
+    g.fillStyle = '#e9eaee'; // soft light gray rather than pure white
     g.fillRect(0, 0, c.width, c.height);
     g.strokeStyle = 'rgba(20,25,35,0.22)';
     g.lineWidth = 2;
@@ -788,14 +930,14 @@
   sunGlowCanvas.width = 128; sunGlowCanvas.height = 128;
   const sunGlowCtx = sunGlowCanvas.getContext('2d');
   const sunGlowGrad = sunGlowCtx.createRadialGradient(64, 64, 0, 64, 64, 64);
-  sunGlowGrad.addColorStop(0, 'rgba(255,244,214,0.55)');
+  sunGlowGrad.addColorStop(0, 'rgba(255,244,214,0.3)');
   sunGlowGrad.addColorStop(1, 'rgba(255,244,214,0)');
   sunGlowCtx.fillStyle = sunGlowGrad;
   sunGlowCtx.fillRect(0, 0, 128, 128);
   const sunGlowSprite = new THREE.Sprite(new THREE.SpriteMaterial({
     map: new THREE.CanvasTexture(sunGlowCanvas), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
   }));
-  sunGlowSprite.scale.set(9, 9, 1);
+  sunGlowSprite.scale.set(5, 5, 1); // smaller, so it doesn't wash over the globe when the sun is in view
   sunMesh.add(sunGlowSprite);
 
   const moonMesh = new THREE.Mesh(
@@ -903,16 +1045,19 @@
   // the sphere; a matching canvas texture is painted to visualize it.
   const GRID_W = 180, GRID_H = 90;
   const EMPTY = 0, PINK = 1, CYAN = 2, DARK_PINK = 3, METEOR_CRATER = 4, CRYSTAL_ZONE = 5, DARK_CYAN = 6, MOON_CRATER = 7;
-  const POISON_POOL = 10, TOXIC_POOL = 11; // (8 / 9 are taken on the wire by farm cells)
+  const POISON_POOL = 10, TOXIC_POOL = 11; // (8 / 9 are unused)
+  // Level 3 ground (made by B enclosing dark ground): red for pink, deep blue for cyan.
+  const RED_PINK = 12, DEEP_BLUE = 13;
+  const RED_OF = [RED_PINK, DEEP_BLUE];
   // Per-team colours: index 0 = pink team (player 1), 1 = cyan team (player 2).
   const LIGHT_OF = [PINK, CYAN];
   const DARK_OF = [DARK_PINK, DARK_CYAN];
   function teamOfCell(c){
-    if (c === PINK || c === DARK_PINK) return 0;
-    if (c === CYAN || c === DARK_CYAN) return 1;
+    if (c === PINK || c === DARK_PINK || c === RED_PINK) return 0;
+    if (c === CYAN || c === DARK_CYAN || c === DEEP_BLUE) return 1;
     return -1;
   }
-  const isTeamTerritory = [c => c === PINK || c === DARK_PINK, c => c === CYAN || c === DARK_CYAN];
+  const isTeamTerritory = [c => c === PINK || c === DARK_PINK || c === RED_PINK, c => c === CYAN || c === DARK_CYAN || c === DEEP_BLUE];
   const TEAM_NAMES = ['ピンク陣営', '水色陣営'];
   // Row-level change tracking, so the host only resends territory rows that changed.
   const terrRowDirty = new Uint8Array(90);
@@ -998,10 +1143,10 @@
     glowDirty = true;
   }
 
-  const PINK_COLOR = 'rgba(255,90,160,0.9)';
-  const DARK_PINK_COLOR = 'rgba(190,10,80,0.95)';
-  const CYAN_COLOR = 'rgba(90,210,255,0.9)';
-  const DARK_CYAN_COLOR = 'rgba(10,110,190,0.95)';
+  const PINK_COLOR = 'rgba(253,149,114,0.95)';      // level 1: DIC53
+  const DARK_PINK_COLOR = 'rgba(252,107,61,0.95)';   // level 2: DIC160
+  const CYAN_COLOR = 'rgba(26,193,221,0.95)';       // level 1: カリビアンブルー
+  const DARK_CYAN_COLOR = 'rgba(0,126,255,0.95)';    // level 2: アズール
   const METEOR_CRATER_COLOR = 'rgba(80,15,15,0.95)';  // reddish-black, left by a fallen giant meteor
   const CRYSTAL_ZONE_COLOR = 'rgba(35,205,130,0.85)'; // emerald, left by a spirit crystal
   const MOON_CRATER_COLOR = 'rgba(62,64,70,0.94)'; // dark gray, left by a small meteor from the moon
@@ -1016,14 +1161,6 @@
   // landmark itself naturally expires (see updateLandmarks), which clears
   // this membership before painting them back to EMPTY.
   const landmarkCellSet = new Set();
-  // Role A's "farm" attribute: dark pink cells that A itself upgraded.
-  // A cell only counts as farmland while it's still dark pink — the moment
-  // it's repainted anything else (eroded, cleared, etc.) it loses the
-  // attribute for good (see paintCell).
-  const farmCells = new Set();
-  let farmDirty = false;
-  function isFarmCell(idx){ return farmCells.has(idx) && (territoryGrid[idx] === DARK_PINK || territoryGrid[idx] === DARK_CYAN); }
-  function farmTeam(idx){ return isFarmCell(idx) ? teamOfCell(territoryGrid[idx]) : -1; }
   function colorCssFor(colorId){
     return colorId === PINK ? PINK_COLOR
       : colorId === DARK_PINK ? DARK_PINK_COLOR
@@ -1031,6 +1168,8 @@
       : colorId === METEOR_CRATER ? METEOR_CRATER_COLOR
       : colorId === CRYSTAL_ZONE ? CRYSTAL_ZONE_COLOR
       : colorId === MOON_CRATER ? MOON_CRATER_COLOR
+      : colorId === RED_PINK ? 'rgba(160,80,78,0.95)'     // pink's level 3: DIC300
+      : colorId === DEEP_BLUE ? 'rgba(0,0,129,0.95)'      // cyan's level 3: ネイビーブルー
       : colorId === POISON_POOL ? 'rgba(175,85,235,0.85)'  // 毒溜まり: purple
       : colorId === TOXIC_POOL ? 'rgba(80,12,125,0.95)'    // 猛毒溜まり: deep purple
       : CYAN_COLOR;
@@ -1064,7 +1203,9 @@
     // foot traffic just passing through.
     if (colorId === PINK && territoryGrid[idx] === DARK_PINK) return;
     if (colorId === CYAN && territoryGrid[idx] === DARK_CYAN) return;
-    if (farmCells.delete(idx)) farmDirty = true;
+    // Red / deep-blue ground never drops back to a lower level of its own team.
+    if ((colorId === PINK || colorId === DARK_PINK) && territoryGrid[idx] === RED_PINK) return;
+    if ((colorId === CYAN || colorId === DARK_CYAN) && territoryGrid[idx] === DEEP_BLUE) return;
     territoryGrid[idx] = colorId;
     markRowDirty(idx);
     const cw = TERR_CANVAS_W / GRID_W, ch = TERR_CANVAS_H / GRID_H;
@@ -1335,18 +1476,17 @@
         // becomes ordinary pink, and land that was already pink is
         // reinforced to dark pink. Dark pink is the top level.
         const prev = snapshot[idx];
-        const upgraded = (prev === LIGHT || prev === DARK) ? DARK : LIGHT;
+        // Levels: empty/enemy -> light (level 1) -> dark (level 2) -> red
+        // (level 3, the top). Roles A and B raise ground the same way.
+        const RED = RED_OF[team];
+        let upgraded;
+        if (prev === RED) upgraded = RED;
+        else if (prev === DARK) upgraded = RED;
+        else if (prev === LIGHT) upgraded = DARK;
+        else upgraded = LIGHT;
         paintCell(gx, gy, upgraded);
         if (snapshot !== territoryGrid) snapshot[idx] = upgraded;
         sealed = true;
-        // Farmland is A's alone, and only where A's own loop actually
-        // reinforced its light colour into the dark one.
-        if (ch && ch.role === 'A' && prev === LIGHT && upgraded === DARK
-            && territoryGrid[idx] === DARK && !farmCells.has(idx)){
-          farmCells.add(idx);
-          farmDirty = true;
-          markRowDirty(idx);
-        }
       }
     }
     return sealed;
@@ -1396,7 +1536,7 @@
         if (mob.hpBar) updateHPBarSprite(mob.hpBar, mob.hp / mob.maxHp);
       }
     }
-    for (const other of characters){
+    for (const other of charTargets()){
       if (other.team !== ch.team && other.alive && enclosed.has(dirToGridIdx(other.dir))) damageCharacter(other, trailDmg);
     }
     return true; // a loop really did close here — the caller consumes it
@@ -1690,7 +1830,7 @@
     ...CHARACTER_START_VERTICES.map((v, i) => makeCharacter(v, ['A', 'B', 'C'][i], 0)),
     ...CHARACTER_START_VERTICES.map((v, i) => makeCharacter(antipodeVertex(v), ['A', 'B', 'C'][i], 1))
   ];
-  characters.forEach(ch => paintDirAsColor(ch.dir, LIGHT_OF[ch.team])); // home cells start claimed
+  // (Characters no longer start on a patch of their own ground.)
   function charOf(team, role){ return characters.find(c => c.team === team && c.role === role) || null; }
   const TEAM_DOT_NAMES = ['赤い点', '青い点'];
 
@@ -1883,7 +2023,7 @@
   let BIG_MOB_DAMAGE_MIN = 58, BIG_MOB_DAMAGE_MAX = 71;
   let BIG_MOB_COOLDOWN_MS = 1800;
   let BIG_MOB_RANGE = 7 * Math.PI / 180;
-  let BIG_MOB_SPEED = 0.06 * Math.PI / 180;
+  let BIG_MOB_SPEED = 0.08 * Math.PI / 180;
   let BIG_MOB_SIZE_MULT = 2; // purely visual scale, relative to a normal mob's mesh
 
   // Big blue mob's own independent stat block — starts equal to big pink
@@ -1892,7 +2032,7 @@
   let BIG_BLUE_MOB_DAMAGE_MIN = 58, BIG_BLUE_MOB_DAMAGE_MAX = 71;
   let BIG_BLUE_MOB_COOLDOWN_MS = 1800;
   let BIG_BLUE_MOB_RANGE = 7 * Math.PI / 180;
-  let BIG_BLUE_MOB_SPEED = 0.06 * Math.PI / 180;
+  let BIG_BLUE_MOB_SPEED = 0.08 * Math.PI / 180;
   let BIG_BLUE_MOB_SIZE_MULT = 2;
 
   let GOLD_MOB_HP = 100;
@@ -1979,7 +2119,7 @@
     return mob.isGold ? GOLD_MOB_COOLDOWN_MS : MOB_ATTACK_COOLDOWN_MS;
   }
   function mobDamageRoll(mob){
-    if (mob.isPurple) return 0; // only ever attacks with its thrown orbs
+    if (mob.isPurple) return 0; // never attack directly
     if (mob.isGray) return GRAY_MOB_ATTACK_DAMAGE; // fixed, never a range
     if (mob.isBoss) return BOSS_BLUE_MOB_DAMAGE_MIN + Math.random() * (BOSS_BLUE_MOB_DAMAGE_MAX - BOSS_BLUE_MOB_DAMAGE_MIN);
     if (mob.isAlliedBlack) return BLACK_MOB_DAMAGE_MIN + Math.random() * (BLACK_MOB_DAMAGE_MAX - BLACK_MOB_DAMAGE_MIN);
@@ -2012,7 +2152,7 @@
   function randomCellOfColor(match){
     const matches = [];
     for (let i = 0; i < territoryGrid.length; i++){
-      if (match(territoryGrid[i])) matches.push(i);
+      if (match(territoryGrid[i], i)) matches.push(i);
     }
     if (matches.length === 0) return null;
     return matches[Math.floor(Math.random() * matches.length)];
@@ -2035,10 +2175,11 @@
     list.splice(i, 1);
   }
 
-  let BIG_PINK_MOB_CHANCE = 0.08;   // from dark-pink ground: pink 90% / big 8% / gold 2%
+  let BIG_PINK_MOB_CHANCE = 0.35;   // from dark-pink ground: big 35% / gold 2% / pink the rest
   let DARK_PINK_GOLD_CHANCE = 0.02;
+  let RED_BIG_CHANCE = 0.60, RED_GOLD_CHANCE = 0.05; // red / deep-blue ground: normal 35% / big 60% / gold 5%
   let PLAIN_PINK_GOLD_CHANCE = 0.01; // from plain pink ground: pink 99% / gold 1%
-  let BIG_BLUE_MOB_CHANCE = 0.08; // from cyan ground: shares the same stats as big pink mob
+  let BIG_BLUE_MOB_CHANCE = 0.35; // from cyan ground: shares the same stats as big pink mob
   // A hard cap on how many mobs can be alive per side at once. Without
   // one, the population only ever grows over a long session — every extra
   // spawn source added over time (allied auto-spawns, boss, neutral
@@ -2061,7 +2202,10 @@
     let isBig = false, isGold = false;
     const roll = Math.random();
     const bigChance = isPink ? BIG_PINK_MOB_CHANCE : BIG_BLUE_MOB_CHANCE;
-    if (territoryGrid[idx] === DARK_OF[t]){
+    if (territoryGrid[idx] === RED_OF[t]){
+      if (roll < RED_BIG_CHANCE) isBig = true;
+      else if (roll < RED_BIG_CHANCE + RED_GOLD_CHANCE) isGold = true;
+    } else if (territoryGrid[idx] === DARK_OF[t]){
       if (roll < bigChance) isBig = true;
       else if (roll < bigChance + DARK_PINK_GOLD_CHANCE) isGold = true;
     } else if (roll < PLAIN_PINK_GOLD_CHANCE){
@@ -2191,7 +2335,7 @@
     const territoryD = territoryIdx !== null ? angleBetween(mob.dir, cellIdxToDir(territoryIdx)) : Infinity;
     const em = nearestInList(mob.dir, teamMobs(e));
     const emD = em ? angleBetween(mob.dir, em.dir) : Infinity;
-    const c = nearestInList(mob.dir, characters, ch => ch.alive && ch.team === e);
+    const c = nearestInList(mob.dir, charTargets(), ch => ch.alive && ch.team === e);
     const cD = c ? angleBetween(mob.dir, c.dir) : Infinity;
     if (territoryD === Infinity && emD === Infinity && cD === Infinity){ mob.targetKind = null; mob.target = null; return; }
     if (territoryD <= emD && territoryD <= cD){ mob.targetKind = 'territory'; mob.target = territoryIdx; }
@@ -2211,7 +2355,7 @@
     const e = 1 - mobTeamIdx(mob);
     const within = (item) => angleBetween(mob.dir, item.dir) <= range;
     const em = nearestInList(mob.dir, teamMobs(e), within);
-    const c = nearestInList(mob.dir, characters, ch => ch.alive && ch.team === e && within(ch));
+    const c = nearestInList(mob.dir, charTargets(), ch => ch.alive && ch.team === e && within(ch));
     // Neutral mobs (black / green / gray) inside the range are fair game too.
     // (Only the mobs themselves — the crater / crystal ground is never
     // targeted; erosion below only ever touches the enemy team's colours.)
@@ -2230,9 +2374,9 @@
   const MOB_SPIN_DURATION = 0.4; // seconds, one full vertical tumble
   const MOB_SPIN_AXIS = new THREE.Vector3(1, 0, 0);
   const mobSpinQuat = new THREE.Quaternion();
-  function applyMobSpin(mesh, remaining){
+  function applyMobSpin(mesh, remaining, axis){
     const t = 1 - remaining / MOB_SPIN_DURATION; // 0 -> 1 over the spin
-    mobSpinQuat.setFromAxisAngle(MOB_SPIN_AXIS, t * Math.PI * 2);
+    mobSpinQuat.setFromAxisAngle(axis || MOB_SPIN_AXIS, t * Math.PI * 2);
     mesh.quaternion.multiply(mobSpinQuat);
   }
 
@@ -2288,7 +2432,7 @@
     const e = 1 - mobTeamIdx(mob);
     const mobs = teamMobs(e).slice();
     for (const m of mobs) fn(m.dir, m, false);
-    for (const ch of characters) if (ch.alive && ch.team === e) fn(ch.dir, ch, true);
+    for (const ch of charTargets()) if (ch.alive && ch.team === e) fn(ch.dir, ch, true);
   }
   function damageMobInList(list, target, dmg){
     const i = list.indexOf(target);
@@ -3076,7 +3220,7 @@
   // For a boss mob's area attack: only its team's actual enemies (the
   // other team's dots and mobs) — never its own side.
   function damageEnemiesNear(team, dir, range, damage){
-    for (const ch of characters){
+    for (const ch of charTargets()){
       if (ch.team !== team && ch.alive && angleBetween(ch.dir, dir) <= range) damageCharacter(ch, damage);
     }
     const foes = teamMobs(1 - team);
@@ -3092,7 +3236,7 @@
     }
   }
   function damageEntitiesNear(localDir, radius, damage, excludeNeutral){
-    for (const ch of characters){
+    for (const ch of charTargets()){
       if (ch.alive && angleBetween(ch.dir, localDir) <= radius) damageCharacter(ch, damage);
     }
     if (blueDot.active && angleBetween(blueDot.dir, localDir) <= radius) damageBlueDot(damage);
@@ -3206,7 +3350,7 @@
       // owned by another still-active zone.
       if (landmarkCellSet.has(idx)) return;
       cells.push(idx);
-      prev.push(territoryGrid[idx] | (farmCells.has(idx) ? 256 : 0));
+      prev.push(territoryGrid[idx]);
       paintCell(idx % GRID_W, (idx / GRID_W) | 0, colorId);
     };
     // Paint first, *then* mark the cells protected — otherwise the
@@ -3252,8 +3396,7 @@
           if (lm.prev){
             const pv = lm.prev[k];
             paintCell(gx, gy, EMPTY);
-            if ((pv & 255) !== EMPTY) paintCell(gx, gy, pv & 255);
-            if ((pv & 256) && territoryGrid[idx] === (pv & 255)){ farmCells.add(idx); farmDirty = true; }
+            if (pv !== EMPTY) paintCell(gx, gy, pv);
           } else {
             paintCell(gx, gy, EMPTY);
           }
@@ -3364,35 +3507,6 @@
     }
   }
 
-  // ---- 毒の雨 (host) ----
-  const poisonRains = []; // { team, cells, endAt, nextDropAt }
-  function firePoisonRain(team, path){
-    if (teamCardUsed(team, 'poison_rain')) return;
-    if (!path || path.length < 2) return;
-    const pts = path.map(p => p.clone().normalize());
-    pts.push(pts[0].clone()); // close the loop
-    const cells = getAbilityEnclosedCells(densifyRoute(pts));
-    if (!cells || !cells.length) return;
-    cardUsed[team].poison_rain = true;
-    const now = performance.now();
-    poisonRains.push({ team, cells, endAt: now + POISON_RAIN_DURATION_MS, nextDropAt: now });
-  }
-  function updatePoisonRains(now){
-    for (let i = poisonRains.length - 1; i >= 0; i--){
-      const rain = poisonRains[i];
-      while (now >= rain.nextDropAt && rain.nextDropAt < rain.endAt){
-        const idx = rain.cells[Math.floor(Math.random() * rain.cells.length)];
-        const dir = cellIdxToDir(idx);
-        spawnPoisonDropVisual(dir, (d) => {
-          const r = POISON_POOL_RADIUS_MIN + Math.random() * Math.max(0, POISON_POOL_RADIUS_MAX - POISON_POOL_RADIUS_MIN);
-          spawnLandmark('poison_pool', d, r);
-        });
-        rain.nextDropAt += POISON_RAIN_INTERVAL_MIN_MS + Math.random() * Math.max(0, POISON_RAIN_INTERVAL_MAX_MS - POISON_RAIN_INTERVAL_MIN_MS);
-      }
-      if (rain.nextDropAt >= rain.endAt) poisonRains.splice(i, 1);
-    }
-  }
-
   // ---- 毒液 (the purple ball over a dot's head) ----
   const LIQUID_MESH_R = 0.05;
   function attachLiquidMesh(ch){
@@ -3461,7 +3575,6 @@
     }
   }
   function updatePoisonSystem(dt, now){
-    updatePoisonRains(now);
     updateMobPoison(pinkMobs, now);
     updateMobPoison(blueMobs, now);
     updateMobPoison(neutralMobs, now);
@@ -3632,7 +3745,7 @@
     if (list.length >= MAX_MOBS_PER_TEAM) return;
     if (kind === 'gray'){ spawnAlliedGrayMob(t); return; }
     const isBlack = kind === 'black';
-    const idx = randomCellOfColor(isBlack ? (c => c === DARK_OF[t]) : (c => c === LIGHT_OF[t]));
+    const idx = randomCellOfColor(isBlack ? ((c) => c === DARK_OF[t] || c === RED_OF[t]) : (c => c === LIGHT_OF[t]));
     if (idx === null) return;
     const dir = cellIdxToDir(idx);
     const mesh = makeAlliedMobMesh(isBlack, t);
@@ -3803,7 +3916,7 @@
         if (cell === METEOR_CRATER){ ch.carryingFragment = 'meteor'; attachFragmentMesh(ch, 'meteor'); }
         else if (cell === CRYSTAL_ZONE){ ch.carryingFragment = 'crystal'; attachFragmentMesh(ch, 'crystal'); }
         else if (cell === MOON_CRATER){ ch.carryingFragment = 'moon'; attachFragmentMesh(ch, 'moon'); }
-      } else if (ch.carryingFragment === 'meteor' && cell === DARK_OF[ch.team]){
+      } else if (ch.carryingFragment === 'meteor' && (cell === DARK_OF[ch.team] || cell === RED_OF[ch.team])){
         deliverFragment(ch);
       } else if (ch.carryingFragment === 'crystal' && cell === LIGHT_OF[ch.team]){
         deliverFragment(ch);
@@ -3814,11 +3927,109 @@
     }
   }
 
+  // ---------- 月のかけら: a dot carrying one charges like the gray mob ----------
+  // While the carrier stands still (no route), it keeps charging nearby
+  // enemies — the other team's mobs and dots, and neutral mobs — with the
+  // gray mob's charge exactly (wind-up, dead-straight roll, clipping mobs in
+  // the corridor, blast + stun on a hit, coast to a halt on a miss). There
+  // is no search / attack mode: as soon as one charge ends it winds up the
+  // next one from wherever it stopped. Drawing a route cancels it.
+  function moonChargeVictims(ch){
+    const out = [];
+    const e = 1 - ch.team;
+    for (const m of teamMobs(e).slice()) out.push({ dir: m.dir, ref: m, isChar: false, list: teamMobs(e) });
+    for (const m of neutralMobs.slice()) out.push({ dir: m.dir, ref: m, isChar: false, list: neutralMobs });
+    for (const c of charTargets()) if (c.alive && c.team === e) out.push({ dir: c.dir, ref: c, isChar: true, list: null });
+    return out;
+  }
+  function moonChargeTargetDir(t){
+    if (!t) return null;
+    if (t.isChar) return t.ref.alive ? t.ref.dir : null;
+    return t.list.indexOf(t.ref) !== -1 ? t.ref.dir : null;
+  }
+  // Same pick as the gray mob: thickest crowd within reach, distance breaks ties.
+  function moonChargePickTarget(ch){
+    const inRange = moonChargeVictims(ch).filter(v => angleBetween(ch.dir, v.dir) <= GRAY_MOB_CHARGE_TRIGGER_RANGE);
+    if (!inRange.length) return null;
+    let best = null, bestCount = -1, bestDist = Infinity;
+    for (const cand of inRange){
+      let count = 0;
+      for (const other of inRange) if (angleBetween(cand.dir, other.dir) <= GRAY_MOB_CLUSTER_RADIUS) count++;
+      const dist = angleBetween(ch.dir, cand.dir);
+      if (count > bestCount || (count === bestCount && dist < bestDist)){ best = cand; bestCount = count; bestDist = dist; }
+    }
+    return best;
+  }
+  function updateMoonCharges(now){
+    for (const ch of characters){
+      const able = ch.alive && ch.carryingFragment === 'moon' && !ch.moving && !(ch.stunUntil && now < ch.stunUntil);
+      if (!able){ ch.moonCharge = null; continue; }
+      let mc = ch.moonCharge;
+      if (!mc || mc.state === 'idle'){
+        const found = moonChargePickTarget(ch);
+        if (!found){ ch.moonCharge = { state: 'idle' }; continue; }
+        mc = ch.moonCharge = { state: 'windup', target: { ref: found.ref, isChar: found.isChar, list: found.list }, windupUntil: now + GRAY_MOB_CHARGE_WINDUP_MS };
+      }
+      if (mc.state === 'windup'){
+        const tDir = moonChargeTargetDir(mc.target);
+        if (!tDir){ ch.moonCharge = { state: 'idle' }; continue; }
+        if (now < mc.windupUntil) continue; // standing dead still through the wind-up
+        const axis = new THREE.Vector3().crossVectors(ch.dir, tDir);
+        if (axis.lengthSq() < 1e-12){ ch.moonCharge = { state: 'idle' }; continue; }
+        mc.axis = axis.normalize();
+        mc.remaining = angleBetween(ch.dir, tDir) + GRAY_MOB_CHARGE_OVERSHOOT;
+        mc.speed = GRAY_MOB_CHARGE_SPEED;
+        mc.hits = new Set();
+        mc.state = 'charge';
+      }
+      // charge / slide
+      const speedNow = mc.speed * frameSpeedScale;
+      const step = mc.state === 'slide' ? speedNow : Math.min(speedNow, mc.remaining);
+      if (step > 1e-9){
+        let d = ch.dir.clone().applyAxisAngle(mc.axis, step).normalize();
+        d = pushFreeEntityOutOfObstacles(d, 0);
+        placeCharacterAt(ch, d);
+        if (mc.state === 'charge') mc.remaining -= step;
+      }
+      if (mc.state === 'slide'){
+        mc.speed *= Math.pow(GRAY_MOB_SLIDE_FRICTION, frameSpeedScale);
+        if (mc.speed <= GRAY_MOB_SPEED) ch.moonCharge = { state: 'idle' }; // stopped: next charge from here
+        continue;
+      }
+      // Clip mobs caught in the corridor.
+      for (const v of moonChargeVictims(ch)){
+        if (v.isChar || mc.hits.has(v.ref)) continue;
+        if (angleBetween(ch.dir, v.dir) > GRAY_MOB_CHARGE_LINE_WIDTH) continue;
+        mc.hits.add(v.ref);
+        damageMobInList(v.list, v.ref, GRAY_MOB_CHARGE_LINE_DAMAGE);
+        if (v.list.indexOf(v.ref) !== -1) applyKnockback(v.ref, ch.dir, GRAY_MOB_CHARGE_LINE_KNOCKBACK);
+      }
+      const tDir = moonChargeTargetDir(mc.target);
+      if (tDir && angleBetween(ch.dir, tDir) <= GRAY_MOB_HIT_RADIUS){
+        // The blast: everyone around the target, flung outward and stunned.
+        const from = ch.dir.clone(), center = tDir.clone();
+        for (const v of moonChargeVictims(ch)){
+          if (angleBetween(center, v.dir) > GRAY_MOB_BLAST_RADIUS) continue;
+          if (v.isChar){
+            damageCharacter(v.ref, GRAY_MOB_BLAST_DAMAGE);
+            if (v.ref.alive) v.ref.stunUntil = Math.max(v.ref.stunUntil || 0, now + GRAY_MOB_BLAST_STUN_MS);
+            continue;
+          }
+          damageMobInList(v.list, v.ref, GRAY_MOB_BLAST_DAMAGE);
+          if (v.list.indexOf(v.ref) === -1) continue;
+          applyKnockback(v.ref, from, GRAY_MOB_BLAST_KNOCKBACK_MIN + Math.random() * (GRAY_MOB_BLAST_KNOCKBACK_MAX - GRAY_MOB_BLAST_KNOCKBACK_MIN));
+          stunMob(v.ref, now, GRAY_MOB_BLAST_STUN_MS);
+        }
+        ch.moonCharge = { state: 'idle' }; // hit: next charge from right here
+        continue;
+      }
+      if (mc.remaining <= 1e-9) mc.state = 'slide'; // dodged: coast to a halt
+    }
+  }
+
   // ================= per-character abilities =================
-  // A: farmer (plants/harvests watermelons on its own dark-pink "farm"
-  // ground, throws them to heal hurt allies), B: tunneler (digs a hole
-  // through to the far side of the globe after standing still), C:
-  // werewolf (stronger and faster on the night side).
+  // A and B have no special ability any more: they only claim territory
+  // (up to level 3). C: werewolf (stronger and faster on the night side).
   const ABILITY_UP = new THREE.Vector3(0, 1, 0);
   const ABILITY_Z = new THREE.Vector3(0, 0, 1);
   const _abilityTmp = new THREE.Vector3();
@@ -3831,230 +4042,6 @@
     ch.mesh.position.copy(dir).multiplyScalar(R * 1.02);
     ch.hpBar.position.copy(dir).multiplyScalar(R * 1.02 + CHAR_LOCAL_R + 0.1);
     ch.label.position.copy(dir).multiplyScalar(R * 1.02 + CHAR_LOCAL_R + 0.24);
-  }
-
-  // ---------- A: farm outline (thin green border around A's farm ground) ----------
-  const farmCanvas = document.createElement('canvas');
-  farmCanvas.width = TERR_CANVAS_W; farmCanvas.height = TERR_CANVAS_H;
-  const farmCtx = farmCanvas.getContext('2d');
-  const farmTexture = new THREE.CanvasTexture(farmCanvas);
-  farmTexture.generateMipmaps = false;
-  farmTexture.minFilter = THREE.LinearFilter;
-  farmTexture.magFilter = THREE.LinearFilter;
-  const farmOutlineMesh = new THREE.Mesh(
-    new THREE.SphereGeometry(R * 1.005, 64, 64),
-    new THREE.MeshBasicMaterial({ map: farmTexture, transparent: true, depthWrite: false })
-  );
-  farmOutlineMesh.renderOrder = 1;
-  sphereGroup.add(farmOutlineMesh);
-  let lastFarmRebuildAt = 0;
-  function rebuildFarmOutline(){
-    farmCtx.clearRect(0, 0, TERR_CANVAS_W, TERR_CANVAS_H);
-    const cw = TERR_CANVAS_W / GRID_W, chh = TERR_CANVAS_H / GRID_H;
-    farmCtx.strokeStyle = '#27d13a';
-    farmCtx.lineWidth = 2;
-    farmCtx.beginPath();
-    for (const idx of farmCells){
-      if (!isFarmCell(idx)) continue;
-      const gx = idx % GRID_W, gy = (idx / GRID_W) | 0;
-      const x0 = gx * cw, y0 = gy * chh, x1 = x0 + cw, y1 = y0 + chh;
-      const left = gy * GRID_W + (gx - 1 + GRID_W) % GRID_W;
-      const right = gy * GRID_W + (gx + 1) % GRID_W;
-      const up = gy > 0 ? idx - GRID_W : -1;
-      const down = gy < GRID_H - 1 ? idx + GRID_W : -1;
-      if (!isFarmCell(left)){ farmCtx.moveTo(x0, y0); farmCtx.lineTo(x0, y1); }
-      if (!isFarmCell(right)){ farmCtx.moveTo(x1, y0); farmCtx.lineTo(x1, y1); }
-      if (up < 0 || !isFarmCell(up)){ farmCtx.moveTo(x0, y0); farmCtx.lineTo(x1, y0); }
-      if (down < 0 || !isFarmCell(down)){ farmCtx.moveTo(x0, y1); farmCtx.lineTo(x1, y1); }
-    }
-    farmCtx.stroke();
-    farmTexture.needsUpdate = true;
-  }
-
-  // ---------- A: watermelon crops ----------
-  const watermelonTexture = (() => {
-    const c = document.createElement('canvas');
-    c.width = 64; c.height = 32;
-    const ctx = c.getContext('2d');
-    ctx.fillStyle = '#4fbf45';
-    ctx.fillRect(0, 0, 64, 32);
-    ctx.fillStyle = '#1c5a1e';
-    for (let s = 0; s < 8; s++){
-      for (let y = 0; y < 32; y++){
-        const x = s * 8 + 2 + Math.sin(y * 0.55 + s) * 1.6;
-        ctx.fillRect(x, y, 3, 1);
-      }
-    }
-    const tex = new THREE.CanvasTexture(c);
-    tex.wrapS = THREE.RepeatWrapping;
-    return tex;
-  })();
-  const watermelonGeo = new THREE.SphereGeometry(1, 16, 12);
-  const watermelonMat = new THREE.MeshStandardMaterial({ map: watermelonTexture, roughness: 0.55, metalness: 0 });
-  const crops = []; // { dir, cellIdx, mesh, progress, ripe }
-  const MAX_CROPS = 200;
-  function plantCrop(dir, cellIdx, team){
-    const mesh = new THREE.Mesh(watermelonGeo, watermelonMat);
-    mesh.quaternion.setFromUnitVectors(ABILITY_UP, dir);
-    sphereGroup.add(mesh);
-    const crop = { dir: dir.clone(), cellIdx, mesh, progress: 0, ripe: false, team: team || 0 };
-    crops.push(crop);
-    layoutCrop(crop);
-  }
-  function layoutCrop(crop){
-    const fullR = R * CROP_RADIUS * 0.85;
-    const r = fullR * (0.25 + 0.75 * Math.min(1, crop.progress));
-    crop.mesh.scale.setScalar(r);
-    crop.mesh.position.copy(crop.dir).multiplyScalar(R * 1.02 + r * 0.55);
-  }
-  function removeCrop(i){
-    sphereGroup.remove(crops[i].mesh);
-    crops.splice(i, 1);
-  }
-  function updateCrops(dt){
-    for (let i = crops.length - 1; i >= 0; i--){
-      const crop = crops[i];
-      // The farm ground under it was lost (eroded, cleared...) — so is the crop.
-      if (farmTeam(crop.cellIdx) !== crop.team){ removeCrop(i); continue; }
-      if (!crop.ripe){
-        // Grows by a count: +1.2/sec by day, +0.8/sec by night (defaults),
-        // ripe at 20. crop.progress stays the 0..1 fraction of that.
-        const rate = isNightAtLocalDir(crop.dir) ? CROP_NIGHT_RATE : CROP_DAY_RATE;
-        crop.progress += (dt * rate) / Math.max(0.1, CROP_GROW_COUNT);
-        if (crop.progress >= 1){ crop.progress = 1; crop.ripe = true; }
-        layoutCrop(crop);
-      }
-    }
-  }
-
-  // ---------- A: watermelon stock label ("スイカN個" above the HP bar) ----------
-  function makeStockLabelSprite(){
-    const c = document.createElement('canvas');
-    c.width = 192; c.height = 48;
-    const ctx = c.getContext('2d');
-    const tex = new THREE.CanvasTexture(c);
-    tex.generateMipmaps = false;
-    tex.minFilter = THREE.LinearFilter;
-    const spr = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, depthTest: false, depthWrite: false, transparent: true }));
-    spr.scale.set(0.5, 0.125, 1);
-    spr.renderOrder = 999;
-    spr._canvas = c; spr._ctx = ctx; spr._tex = tex; spr._shown = -1;
-    return spr;
-  }
-  function refreshStockLabel(ch){
-    const spr = ch.stockLabel;
-    const n = ch.watermelons || 0;
-    spr.visible = ch.alive && n > 0;
-    if (spr._shown === n) return;
-    spr._shown = n;
-    const c = spr._canvas, ctx = spr._ctx;
-    ctx.clearRect(0, 0, c.width, c.height);
-    ctx.font = 'bold 26px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.lineWidth = 5;
-    ctx.strokeStyle = 'rgba(0,0,0,0.75)';
-    ctx.strokeText('スイカ' + n + '個', c.width / 2, c.height / 2 + 1);
-    ctx.fillStyle = '#7dff72';
-    ctx.fillText('スイカ' + n + '個', c.width / 2, c.height / 2 + 1);
-    spr._tex.needsUpdate = true;
-  }
-
-  // ---------- A: throwing watermelons to heal hurt allies ----------
-  const watermelonThrows = []; // { mesh, from, target, t, duration }
-  function isHealTargetAlive(target){
-    return target.role ? target.alive : (pinkMobs.indexOf(target) !== -1 || blueMobs.indexOf(target) !== -1);
-  }
-  function pickHealTarget(farmer){
-    let best = null, bestFrac = Infinity;
-    const consider = (t) => {
-      if (t.hp >= t.maxHp) return;
-      if (angleBetween(farmer.dir, t.dir) > WATERMELON_THROW_RANGE) return;
-      const frac = t.hp / t.maxHp; // lowest remaining HP gets priority
-      if (frac < bestFrac){ bestFrac = frac; best = t; }
-    };
-    for (const ch of characters) if (ch !== farmer && ch.alive && ch.team === farmer.team) consider(ch);
-    for (const m of teamMobs(farmer.team)) consider(m);
-    return best;
-  }
-  function healTarget(target, amount){
-    const healed = Math.min(target.maxHp - target.hp, amount);
-    if (healed <= 0) return;
-    target.hp += healed;
-    if (target.role){
-      updateHPBarSprite(target.hpBar, target.hp / target.maxHp);
-      spawnFloatingNumber(target.dir, CHAR_LOCAL_R, healed, '#3dff6e');
-    } else {
-      target.mesh.material.color.copy(target.baseColor).lerp(MOB_DAMAGED_COLOR, 1 - target.hp / target.maxHp);
-      if (target.hpBar) updateHPBarSprite(target.hpBar, target.hp / target.maxHp);
-      spawnFloatingNumber(target.dir, mobVisualRadius(target), healed, '#3dff6e');
-    }
-  }
-  function throwWatermelon(farmer, target){
-    const mesh = new THREE.Mesh(watermelonGeo, watermelonMat);
-    mesh.scale.setScalar(R * CROP_RADIUS * 0.6);
-    sphereGroup.add(mesh);
-    netPushEvent('w' + encDir(farmer.dir) + encDir(target.dir));
-    watermelonThrows.push({ mesh, from: farmer.dir.clone(), target, t: 0, duration: 0.45 });
-  }
-  function updateWatermelonThrows(dt){
-    for (let i = watermelonThrows.length - 1; i >= 0; i--){
-      const w = watermelonThrows[i];
-      if (!isHealTargetAlive(w.target)){
-        sphereGroup.remove(w.mesh); watermelonThrows.splice(i, 1); continue;
-      }
-      w.t += dt;
-      const p = Math.min(1, w.t / w.duration);
-      const d = slerpVec(w.from, w.target.dir, p).normalize();
-      w.mesh.position.copy(d).multiplyScalar(R * 1.04 + Math.sin(Math.PI * p) * 0.35);
-      w.mesh.rotation.x += dt * 10;
-      if (p >= 1){
-        healTarget(w.target, WATERMELON_HEAL);
-        sphereGroup.remove(w.mesh);
-        watermelonThrows.splice(i, 1);
-      }
-    }
-  }
-
-  function updateFarmer(ch, dt, now){
-    if (!ch.stockLabel){
-      ch.stockLabel = makeStockLabelSprite();
-      ch.watermelons = 0;
-      ch.nextThrowAt = 0;
-      sphereGroup.add(ch.stockLabel);
-    }
-    if (!ch.alive){ ch.stockLabel.visible = false; return; }
-    // Harvest a ripe watermelon underfoot.
-    if (ch.watermelons < WATERMELON_MAX_STOCK){
-      for (let i = crops.length - 1; i >= 0; i--){
-        const crop = crops[i];
-        if (crop.team === ch.team && crop.ripe && angleBetween(crop.dir, ch.dir) <= CROP_RADIUS){
-          removeCrop(i);
-          ch.watermelons++;
-          break;
-        }
-      }
-    }
-    // Plant a seed underfoot, on farm ground, where no other seed's circle overlaps.
-    const idx = dirToGridIdx(ch.dir);
-    if (farmTeam(idx) === ch.team && crops.reduce((n, c) => n + (c.team === ch.team ? 1 : 0), 0) < MAX_CROPS){
-      let clear = true;
-      for (const crop of crops){
-        if (angleBetween(crop.dir, ch.dir) < CROP_RADIUS * 2){ clear = false; break; }
-      }
-      if (clear) plantCrop(ch.dir, idx, ch.team);
-    }
-    // Throw one to the most-hurt ally in range.
-    if (ch.watermelons > 0 && now >= ch.nextThrowAt){
-      const target = pickHealTarget(ch);
-      if (target){
-        ch.watermelons--;
-        throwWatermelon(ch, target);
-        ch.nextThrowAt = now + WATERMELON_THROW_INTERVAL_MS;
-      }
-    }
-    ch.stockLabel.position.copy(ch.dir).multiplyScalar(R * 1.02 + CHAR_LOCAL_R + 0.38);
-    refreshStockLabel(ch);
   }
 
   // ---------- B: one-way ✕ marks. Stepping on one throws you to the exact
@@ -4319,10 +4306,12 @@
     wolfEars.position.copy(_earPos);
   }
 
+  // Everything that can be hit as a "character" (no extra chain links any more).
+  function charTargets(){ return characters; }
+
   const _headingDelta = new THREE.Vector3();
   function updateCharacterAbilities(dt, now){
-    // Track each character's last walking direction (B needs it to know
-    // what's "in front").
+    // Track each character's last walking direction.
     for (const ch of characters){
       if (!ch._prevDir){ ch._prevDir = ch.dir.clone(); continue; }
       _headingDelta.copy(ch.dir).sub(ch._prevDir);
@@ -4333,25 +4322,10 @@
       }
       ch._prevDir.copy(ch.dir);
     }
-    for (let t = 0; t < 2; t++){
-      const farmer = charOf(t, 'A');
-      if (farmer) updateFarmer(farmer, dt, now);
-    }
-    updateCrops(dt);
-    updateWatermelonThrows(dt);
-    for (let t = 0; t < 2; t++){
-      const tunneler = charOf(t, 'B');
-      if (tunneler) updateTunneler(tunneler, dt);
-    }
     updateTunnelWarps();
     for (let t = 0; t < 2; t++){
       const wolf = charOf(t, 'C');
       if (wolf) updateWerewolfEars(wolf);
-    }
-    if (farmDirty && now - lastFarmRebuildAt > 250){
-      rebuildFarmOutline();
-      farmDirty = false;
-      lastFarmRebuildAt = now;
     }
   }
 
@@ -4519,7 +4493,7 @@
       const d = angleBetween(mob.dir, ref.dir);
       if (d < bestD){ bestD = d; best = { kind, ref }; }
     };
-    for (const ch of characters) if (ch.alive) consider('char', ch);
+    for (const ch of charTargets()) if (ch.alive) consider('char', ch);
     if (blueDot.active) consider('dot', blueDot);
     for (const m of pinkMobs) consider('pinkMob', m);
     for (const m of blueMobs) consider('blueMob', m);
@@ -4584,7 +4558,7 @@
       const list = teamMobs(t);
       for (const m of list.slice()) out.push({ dir: m.dir, ref: m, isChar: false, list });
     }
-    for (const ch of characters) if (ch.alive) out.push({ dir: ch.dir, ref: ch, isChar: true, list: null });
+    for (const ch of charTargets()) if (ch.alive) out.push({ dir: ch.dir, ref: ch, isChar: true, list: null });
     return out;
   }
   function neutralGrayTargetDir(mob){
@@ -5034,44 +5008,6 @@
     return mob.dir.clone(); // boxed in on all sides — hold position
   }
 
-  // ---------- light pillar effect (strong skill card "光の柱") ----------
-  const pillarEffects = [];
-  const PILLAR_COLORS = [0x4da6ff, 0xff4d4d, 0xffe14d, 0x4dff88]; // blue, red, yellow, green
-  function spawnLightPillarEffect(localDir, damage, onSettle, visualColorIdx){
-    const visualOnly = visualColorIdx !== undefined;
-    if (!visualOnly) damageEntitiesNear(localDir, 0.12, damage);
-    const worldPos = sphereGroup.localToWorld(localDir.clone().multiplyScalar(R));
-    const dirN = worldPos.clone().normalize();
-    const geo = new THREE.CylinderGeometry(0.05, 0.1, 1.5, 14, 1, true);
-    const colorIdx = visualOnly ? visualColorIdx : Math.floor(Math.random() * PILLAR_COLORS.length);
-    const color = PILLAR_COLORS[colorIdx] || PILLAR_COLORS[0];
-    if (!visualOnly) netPushEvent('p' + encDir(localDir) + enc1(colorIdx));
-    const mat = new THREE.MeshBasicMaterial({
-      color, transparent: true, opacity: 0.85, side: THREE.DoubleSide,
-      blending: THREE.AdditiveBlending, depthWrite: false
-    });
-    const mesh = new THREE.Mesh(geo, mat);
-    mesh.position.copy(worldPos).add(dirN.clone().multiplyScalar(0.55));
-    mesh.quaternion.setFromUnitVectors(MOB_UP, dirN);
-    scene.add(mesh);
-    pillarEffects.push({ mesh, t: 0, duration: 0.5 });
-    if (onSettle) setTimeout(onSettle, 480);
-  }
-  function updatePillarEffects(dt){
-    for (let i = pillarEffects.length - 1; i >= 0; i--){
-      const fx = pillarEffects[i];
-      fx.t += dt;
-      const p = Math.min(fx.t / fx.duration, 1);
-      fx.mesh.material.opacity = 0.85 * (1 - p);
-      fx.mesh.scale.set(1 + p * 0.35, 1, 1 + p * 0.35);
-      if (p >= 1){
-        scene.remove(fx.mesh);
-        fx.mesh.geometry.dispose(); fx.mesh.material.dispose();
-        pillarEffects.splice(i, 1);
-      }
-    }
-  }
-
   // ---------- geometry helpers (angular / great-circle) ----------
   function angleBetween(a, b){
     return Math.acos(THREE.MathUtils.clamp(a.dot(b), -1, 1));
@@ -5165,15 +5101,7 @@
   const MIN_POINT_DIST_PX = 6;
   const MIN_PATH_ANGULAR = 0.05;
   let ANGULAR_SPEED = 0.2 * Math.PI / 180; // now edited directly via the settings menu
-  // ---- per-character abilities (A: farmer, B: tunneler, C: werewolf) ----
-  let CROP_GROW_COUNT = 20;      // a seed is ripe once its growth count reaches this
-  let CROP_DAY_RATE = 1.2;       // count gained per second on the day side
-  let CROP_NIGHT_RATE = 0.8;     // count gained per second on the night side
-  let CROP_RADIUS = 2 * Math.PI / 180;       // each planted seed claims a circle this size; seeds never overlap
-  let WATERMELON_MAX_STOCK = 10;
-  let WATERMELON_THROW_RANGE = 20 * Math.PI / 180;
-  let WATERMELON_THROW_INTERVAL_MS = 1000;
-  let WATERMELON_HEAL = 100;
+  // ---- per-character abilities (C: werewolf) ----
   let MAX_TUNNEL_MARKS = 3; // how many ✕ marks may exist at once
   let HOLE_RADIUS = 3 * Math.PI / 180; // the ✕ mark's size and the range that triggers a warp
   // How squarely B's route must cut across its own earlier line to count as
@@ -5186,27 +5114,13 @@
   const PATH_CROSS_SELF_SKIP_ARC = 0.12;
   let WEREWOLF_SPEED_MULT = 2;
   let WEREWOLF_DAMAGE_MULT = 2;
-  let GIANT_METEOR_DAMAGE = 360;
-  let LIGHT_PILLAR_DAMAGE = 150;
-  let LIGHT_PILLAR_COUNT = 6; // lasers per use, spread evenly along the drawn line
 
   // ---------- settings menu: every gameplay number, grouped and editable ----------
   const RAD2DEG = 180 / Math.PI, DEG2RAD = Math.PI / 180;
   const SETTINGS_SECTIONS = [
-    { title: 'A 農家の能力(赤い点・青い点共通)', items: [
-      { label: 'スイカが育つカウント', get: () => CROP_GROW_COUNT, set: v => { CROP_GROW_COUNT = v; }, step: 1, min: 1 },
-      { label: 'カウントの進み(昼)', unit: '倍', get: () => CROP_DAY_RATE, set: v => { CROP_DAY_RATE = v; }, step: 0.1, min: 0 },
-      { label: 'カウントの進み(夜)', unit: '倍', get: () => CROP_NIGHT_RATE, set: v => { CROP_NIGHT_RATE = v; }, step: 0.1, min: 0 },
-      { label: '作物の種の半径', unit: '°', get: () => CROP_RADIUS * RAD2DEG, set: v => { CROP_RADIUS = v * DEG2RAD; }, step: 0.5, min: 0.5 },
-      { label: 'スイカ最大ストック', unit: '個', get: () => WATERMELON_MAX_STOCK, set: v => { WATERMELON_MAX_STOCK = Math.max(1, Math.round(v)); }, step: 1, min: 1 },
-      { label: 'スイカを投げる範囲', unit: '°', get: () => WATERMELON_THROW_RANGE * RAD2DEG, set: v => { WATERMELON_THROW_RANGE = v * DEG2RAD; }, step: 0.5, min: 0.5 },
-      { label: 'スイカを投げる頻度', unit: '秒', get: () => WATERMELON_THROW_INTERVAL_MS / 1000, set: v => { WATERMELON_THROW_INTERVAL_MS = v * 1000; }, step: 0.1, min: 0.1 },
-      { label: 'スイカの回復量', get: () => WATERMELON_HEAL, set: v => { WATERMELON_HEAL = v; }, step: 10, min: 0 },
-    ]},
-    { title: 'B 開通者の能力(共通)', items: [
-      { label: '☓マークの最大数', unit: '個', get: () => MAX_TUNNEL_MARKS, set: v => { MAX_TUNNEL_MARKS = Math.max(1, Math.round(v)); }, step: 1, min: 1 },
-      { label: '穴(☓マーク)の半径', unit: '°', get: () => HOLE_RADIUS * RAD2DEG, set: v => { HOLE_RADIUS = v * DEG2RAD; }, step: 0.5, min: 0.5 },
-      { label: '交差とみなす最小角度', unit: '°', get: () => PATH_CROSS_MIN_ANGLE * RAD2DEG, set: v => { PATH_CROSS_MIN_ANGLE = Math.min(89, v) * DEG2RAD; }, step: 5, min: 0, max: 89 },
+    { title: '赤い色(青い色)の陣地', items: [
+      { label: 'ビッグ出現率', unit: '%', get: () => RED_BIG_CHANCE * 100, set: v => { RED_BIG_CHANCE = v / 100; }, step: 1, min: 0, max: 100 },
+      { label: 'ゴールド(シルバー)出現率', unit: '%', get: () => RED_GOLD_CHANCE * 100, set: v => { RED_GOLD_CHANCE = v / 100; }, step: 1, min: 0, max: 100 },
     ]},
     { title: 'C 狼人間の能力(共通)', items: [
       { label: '夜の移動速度倍率', get: () => WEREWOLF_SPEED_MULT, set: v => { WEREWOLF_SPEED_MULT = v; }, step: 0.1, min: 0.1 },
@@ -5300,11 +5214,7 @@
       { label: '攻撃/侵食範囲', unit: '°', get: () => GRAY_MOB_RANGE * RAD2DEG, set: v => { GRAY_MOB_RANGE = v * DEG2RAD; }, step: 0.5, min: 0.5 },
       { label: '索敵範囲', unit: '°', get: () => GRAY_MOB_ATTACK_SEARCH_RANGE * RAD2DEG, set: v => { GRAY_MOB_ATTACK_SEARCH_RANGE = v * DEG2RAD; }, step: 0.5, min: 0.5 },
     ]},
-    { title: '月の隕石・月のかけら', items: [
-      { label: '着弾範囲(陣地消去・ダメージ)', unit: '°', get: () => MOON_METEOR_CLEAR * RAD2DEG, set: v => { MOON_METEOR_CLEAR = v * DEG2RAD; }, step: 0.5, min: 0.5 },
-      { label: '着弾ダメージ', get: () => MOON_METEOR_DAMAGE, set: v => { MOON_METEOR_DAMAGE = v; }, step: 10, min: 0 },
-      { label: '吹き飛ばし(最小)', unit: '°', get: () => MOON_METEOR_KNOCKBACK_MIN * RAD2DEG, set: v => { MOON_METEOR_KNOCKBACK_MIN = v * DEG2RAD; }, step: 0.1, min: 0 },
-      { label: '吹き飛ばし(最大)', unit: '°', get: () => MOON_METEOR_KNOCKBACK_MAX * RAD2DEG, set: v => { MOON_METEOR_KNOCKBACK_MAX = v * DEG2RAD; }, step: 0.1, min: 0 },
+    { title: '月のかけら・月のクレーター', items: [
       { label: 'クレーター半径', unit: '°', get: () => MOON_CRATER_RADIUS * RAD2DEG, set: v => { MOON_CRATER_RADIUS = v * DEG2RAD; }, step: 0.5, min: 0.5 },
       { label: '味方グレーモブ出現率(納品1回あたり)', unit: '%', get: () => MOON_FRAGMENT_GRAY_MOB_BASE_CHANCE * 100, set: v => { MOON_FRAGMENT_GRAY_MOB_BASE_CHANCE = v / 100; }, step: 0.5, min: 0, max: 100 },
     ]},
@@ -5342,16 +5252,6 @@
       { label: '精霊結晶1つあたりの出現数', unit: '体', get: () => CRYSTAL_GREEN_MOB_COUNT, set: v => { CRYSTAL_GREEN_MOB_COUNT = Math.max(0, Math.round(v)); }, step: 1, min: 0, max: 5 },
       { label: '重さ', get: () => GREEN_MOB_MASS, set: v => { GREEN_MOB_MASS = v; }, step: 0.5, min: 0.1 },
     ]},
-    { title: '毒の雨・毒溜まり・猛毒溜まり', items: [
-      { label: '毒の雨の継続時間', unit: '秒', get: () => POISON_RAIN_DURATION_MS / 1000, set: v => { POISON_RAIN_DURATION_MS = v * 1000; }, step: 1, min: 1 },
-      { label: '雨粒の間隔(最短)', unit: '秒', get: () => POISON_RAIN_INTERVAL_MIN_MS / 1000, set: v => { POISON_RAIN_INTERVAL_MIN_MS = v * 1000; }, step: 0.1, min: 0.1 },
-      { label: '雨粒の間隔(最長)', unit: '秒', get: () => POISON_RAIN_INTERVAL_MAX_MS / 1000, set: v => { POISON_RAIN_INTERVAL_MAX_MS = v * 1000; }, step: 0.1, min: 0.1 },
-      { label: '毒溜まり半径(最小)', unit: '°', get: () => POISON_POOL_RADIUS_MIN * RAD2DEG, set: v => { POISON_POOL_RADIUS_MIN = v * DEG2RAD; }, step: 0.5, min: 0.5 },
-      { label: '毒溜まり半径(最大)', unit: '°', get: () => POISON_POOL_RADIUS_MAX * RAD2DEG, set: v => { POISON_POOL_RADIUS_MAX = v * DEG2RAD; }, step: 0.5, min: 0.5 },
-      { label: '毒溜まり消失', unit: '秒', get: () => POISON_POOL_LIFETIME_MS / 1000, set: v => { POISON_POOL_LIFETIME_MS = v * 1000; }, step: 0.5, min: 0.5 },
-      { label: '猛毒溜まり半径', unit: '°', get: () => TOXIC_POOL_RADIUS * RAD2DEG, set: v => { TOXIC_POOL_RADIUS = v * DEG2RAD; }, step: 0.5, min: 0.5 },
-      { label: '猛毒溜まり消失', unit: '秒', get: () => TOXIC_POOL_LIFETIME_MS / 1000, set: v => { TOXIC_POOL_LIFETIME_MS = v * 1000; }, step: 0.5, min: 0.5 },
-    ]},
     { title: '毒状態・猛毒状態・毒液', items: [
       { label: '毒のダメージ', unit: '/秒', get: () => POISON_DPS, set: v => { POISON_DPS = v; }, step: 1, min: 0 },
       { label: '毒の持続', unit: '秒', get: () => POISON_DURATION_MS / 1000, set: v => { POISON_DURATION_MS = v * 1000; }, step: 1, min: 1 },
@@ -5379,11 +5279,8 @@
       { label: '隕石クレーター半径', unit: '°', get: () => METEOR_CRATER_RADIUS * RAD2DEG, set: v => { METEOR_CRATER_RADIUS = v * DEG2RAD; }, step: 0.5, min: 1 },
       { label: '精霊結晶半径', unit: '°', get: () => CRYSTAL_ZONE_RADIUS * RAD2DEG, set: v => { CRYSTAL_ZONE_RADIUS = v * DEG2RAD; }, step: 0.5, min: 1 },
     ]},
-    { title: '隕石・アビリティ', items: [
+    { title: '隕石', items: [
       { label: '陣地消去半径', unit: '°', get: () => METEOR_CLEAR_ANGULAR * RAD2DEG, set: v => { METEOR_CLEAR_ANGULAR = v * DEG2RAD; }, step: 0.5, min: 1 },
-      { label: '巨大隕石ダメージ', get: () => GIANT_METEOR_DAMAGE, set: v => { GIANT_METEOR_DAMAGE = v; }, step: 10, min: 0 },
-      { label: '光の柱ダメージ', get: () => LIGHT_PILLAR_DAMAGE, set: v => { LIGHT_PILLAR_DAMAGE = v; }, step: 5, min: 0 },
-      { label: '光の柱の本数', unit: '本', get: () => LIGHT_PILLAR_COUNT, set: v => { LIGHT_PILLAR_COUNT = Math.max(1, Math.round(v)); }, step: 1, min: 1, max: 8 },
     ]},
   ];
   function roundForDisplay(v){ return Math.round(v * 10000) / 10000; }
@@ -5745,263 +5642,6 @@
     });
   }
 
-  // ---------- ability line targeting + card execution ----------
-  let abilityMode = false;      // sliders panel vs ability panel
-  let abilityDrawing = false;   // currently dragging out the targeting line
-  let abilityDrawPath = [];     // grid vertices
-  let abilityDrawDense = [];    // dense Vector3 points (visual + geometry)
-  let abilityDrawScreenPts = [];
-  let abilityLineMesh = null;
-  const ABILITY_LINE_COLOR = 0xbfefff;
-
-  function setAbilityPathTube(points){
-    if (abilityLineMesh){ sphereGroup.remove(abilityLineMesh); abilityLineMesh.geometry.dispose(); abilityLineMesh = null; }
-    if (!points || points.length < 2) return;
-    const scaled = points.map(p => p.clone().multiplyScalar(R * 1.017));
-    const curve = new THREE.CatmullRomCurve3(scaled, false, 'catmullrom', 0.35);
-    const tubularSegments = Math.max(12, scaled.length * 6);
-    const geo = new THREE.TubeGeometry(curve, tubularSegments, PATH_TUBE_RADIUS * 0.9, 8, false);
-    const mat = new THREE.MeshBasicMaterial({ color: ABILITY_LINE_COLOR, transparent: true, opacity: 0.9 });
-    abilityLineMesh = new THREE.Mesh(geo, mat);
-    sphereGroup.add(abilityLineMesh);
-  }
-  function clearAbilityLine(){
-    abilityDrawPath = []; abilityDrawDense = [];
-    setAbilityPathTube(null);
-  }
-
-  // The interior of whatever loop the drawn ability line closes, using the
-  // same "wall vs. components" approach the territory-enclosure fill uses.
-  function getAbilityEnclosedCells(ptsIn){
-    const pts = ptsIn || abilityDrawDense;
-    if (pts.length < 2) return null;
-    const wall = new Set();
-    for (const pt of pts) forEachCellInBrush(pt, BRUSH_ANGULAR, idx => wall.add(idx));
-    if (wall.size === 0) return null;
-    const components = computeGridComponents(wall);
-    if (components.length < 2) return null; // line never closed a loop
-    components.sort((a, b) => b.weight - a.weight);
-    const outside = components[0];
-    const totalWeight = components.reduce((s, c) => s + c.weight, 0);
-    if (outside.weight < totalWeight * 0.5) return null;
-    const cells = [];
-    for (let i = 1; i < components.length; i++) for (const idx of components[i].cells) cells.push(idx);
-    return cells.length ? cells : null;
-  }
-
-  // Strong-card cooldowns: each one's cooldown length matches how long the
-  // landmark it creates lasts, so the card is usable again right as the
-  // last thing it made expires.
-  // Per team: when each strong card was last fired (host clock).
-  // Strong cards can now be used only once per team per match.
-  const cardUsed = [{ giant_meteor: false, light_pillar: false, poison_rain: false }, { giant_meteor: false, light_pillar: false, poison_rain: false }];
-  function teamCardUsed(team, cardId){ return !!cardUsed[team][cardId]; }
-  // What this screen's own cards show: the host knows its own state;
-  // player 2 goes by the host's latest report.
-  function strongCardUsed(cardId){
-    if (myTeam === -1) return false;
-    if (isSimHost()) return teamCardUsed(myTeam, cardId);
-    return netCardUsed(cardId);
-  }
-  const cooldownDisplayEls = {
-    giant_meteor: { card: document.getElementById('card_giant_meteor'), label: document.getElementById('cooldown_giant_meteor') },
-    light_pillar: { card: document.getElementById('card_light_pillar'), label: document.getElementById('cooldown_light_pillar') },
-    poison_rain: { card: document.getElementById('card_poison_rain'), label: document.getElementById('cooldown_poison_rain') }
-  };
-  function updateCardCooldownDisplays(now){
-    for (const cardId in cooldownDisplayEls){
-      const { card, label } = cooldownDisplayEls[cardId];
-      if (strongCardUsed(cardId)){
-        card.classList.add('onCooldown');
-        label.textContent = '使用済み';
-      } else {
-        card.classList.remove('onCooldown');
-        label.textContent = '';
-      }
-    }
-  }
-
-  // Host-side effects of the two strong cards, for either team.
-  function fireGiantMeteor(team, centroid){
-    const now = performance.now();
-    if (teamCardUsed(team, 'giant_meteor')) return;
-    cardUsed[team].giant_meteor = true;
-    launchMeteor(centroid, dirToUV(centroid), {
-      damage: GIANT_METEOR_DAMAGE,
-      sizeMult: 3,       // unchanged: damage radius / territory-clear radius
-      visualMult: 3 * 3, // 3x bigger-looking again, on top of the existing 3x
-      onLanded: (dir) => {
-        const lm = spawnLandmark('meteor_mountain', dir);
-        // Black mobs appear only here, once, all at the same moment.
-        for (let k = 0; k < CRATER_BLACK_MOB_COUNT; k++) spawnNeutralMob('black', lm);
-      }
-    });
-  }
-  // ---------- small meteors from the moon ----------
-  let moonMeteorTimes = [];
-  let moonMeteorNext = 0;
-  function scheduleMoonMeteors(){
-    moonMeteorTimes = [];
-    for (let i = 0; i < MOON_METEOR_COUNT; i++){
-      moonMeteorTimes.push(MOON_METEOR_WINDOW_MS[0] + Math.random() * (MOON_METEOR_WINDOW_MS[1] - MOON_METEOR_WINDOW_MS[0]));
-    }
-    moonMeteorTimes.sort((a, b) => a - b);
-    moonMeteorNext = 0;
-  }
-  function updateMoonMeteors(){
-    const el = gameElapsedMs();
-    while (moonMeteorNext < moonMeteorTimes.length && el >= moonMeteorTimes[moonMeteorNext]){
-      moonMeteorNext++;
-      launchMoonMeteor();
-    }
-  }
-  // Somewhere nobody owns: an unclaimed cell whose whole impact circle is
-  // (ideally) unclaimed too. Sampled uniformly over the globe's surface.
-  function pickMoonLandingDir(){
-    let best = null, bestBad = Infinity;
-    for (let k = 0; k < 80 && bestBad > 0; k++){
-      const idx = dirToGridIdx(randomSphereDir());
-      if (territoryGrid[idx] !== EMPTY || landmarkCellSet.has(idx)) continue;
-      const d = cellIdxToDir(idx);
-      let bad = 0;
-      forEachCellInBrush(d, MOON_METEOR_CLEAR, (c) => { if (territoryGrid[c] !== EMPTY || landmarkCellSet.has(c)) bad++; });
-      if (bad < bestBad){ best = d; bestBad = bad; }
-    }
-    if (!best){
-      const idx = randomCellOfColor(c => c === EMPTY);
-      best = idx !== null ? cellIdxToDir(idx) : randomSphereDir();
-    }
-    return best;
-  }
-  function launchMoonMeteor(){
-    const d = pickMoonLandingDir();
-    moonMesh.updateMatrixWorld();
-    launchMeteor(d, dirToUV(d), {
-      startWorld: moonMesh.position.clone(),
-      sizeMult: 1, visualMult: 0.8, duration: 1.3,
-      clearRadius: MOON_METEOR_CLEAR,
-      onLanded: moonMeteorLanded
-    });
-  }
-  function moonMeteorLanded(dir){
-    const r = MOON_METEOR_CLEAR;
-    const hit = [];
-    for (let t = 0; t < 2; t++) for (const m of teamMobs(t)) if (angleBetween(m.dir, dir) <= r) hit.push([m, teamMobs(t)]);
-    for (const m of neutralMobs) if (angleBetween(m.dir, dir) <= r) hit.push([m, neutralMobs]);
-    damageEntitiesNear(dir, r, MOON_METEOR_DAMAGE);
-    // Survivors are flung outward from the impact, like the gray mob's blast.
-    for (const [m, list] of hit){
-      if (list.indexOf(m) === -1) continue;
-      applyKnockback(m, dir, MOON_METEOR_KNOCKBACK_MIN + Math.random() * (MOON_METEOR_KNOCKBACK_MAX - MOON_METEOR_KNOCKBACK_MIN));
-    }
-    const lm = spawnLandmark('moon_crater', dir);
-    // Exactly one gray guardian per crater; it vanishes with the crater.
-    spawnNeutralMob('gray', lm);
-  }
-
-  function fireLightPillar(team, targetCells){
-    const now = performance.now();
-    if (teamCardUsed(team, 'light_pillar')) return;
-    if (!targetCells || targetCells.length === 0) return;
-    cardUsed[team].light_pillar = true;
-    // Cells arrive in order from the start of the drawn line to its end,
-    // so the lasers fall along it in that order.
-    targetCells.forEach((idx, i) => {
-      setTimeout(() => {
-        if (!simRunning()) return;
-        const dir = cellIdxToDir(idx);
-        // Every laser leaves its own diamond zone, and each new spirit
-        // crystal brings exactly one green mob with it (only then, once).
-        spawnLightPillarEffect(dir, LIGHT_PILLAR_DAMAGE, () => {
-          if (!simRunning()) return;
-          const lm = spawnLandmark('spirit_crystal', dir);
-          for (let k = 0; k < CRYSTAL_GREEN_MOB_COUNT; k++) spawnNeutralMob('green', lm);
-        });
-      }, i * 160);
-    });
-  }
-
-  // This screen's own card use: work out the target from the drawn loop,
-  // then hand it to the host (or apply it directly when this is the host).
-  // 毒の雨: needs a closed loop, like the giant meteor. The loop's outline
-  // travels to the host, which works out the enclosed ground itself.
-  function usePoisonRain(){
-    const cells = getAbilityEnclosedCells();
-    if (cells) netAction({ type: 'rain', path: abilityDrawDense.slice() });
-    clearAbilityLine();
-  }
-  function useGiantMeteor(){
-    const cells = getAbilityEnclosedCells();
-    if (cells){
-      const centroid = new THREE.Vector3();
-      for (const idx of cells) centroid.add(cellIdxToDir(idx));
-      centroid.normalize();
-      netAction({ type: 'giant', dir: centroid });
-    }
-    clearAbilityLine();
-  }
-
-  // Lasers fall ON the drawn line: LIGHT_PILLAR_COUNT of them, evenly
-  // spaced, the first exactly at the line's start and the last exactly at
-  // its end. Spacing = length / (count - 1), so it scales with the line
-  // automatically (6 lasers: length 10 -> 2 apart, length 30 -> 6 apart).
-  function useLightPillar(){
-    const pts = abilityDrawDense;
-    if (pts.length >= 2){
-      const cum = buildAngularCum(pts);
-      const total = cum[cum.length - 1] || 0;
-      if (total > 0){
-        const n = Math.max(1, Math.round(LIGHT_PILLAR_COUNT));
-        const targets = [];
-        for (let i = 0; i < n; i++){
-          const dist = n === 1 ? total / 2 : total * i / (n - 1);
-          const d = pointAtAngularDistance(pts, cum, dist);
-          targets.push(dirToGridIdx(d));
-        }
-        netAction({ type: 'pillar', cells: targets });
-      }
-    }
-    clearAbilityLine();
-  }
-
-  // ---------- arm -> draw -> release-to-fire ----------
-  // Swiping a card up doesn't fire it immediately: it "arms" that ability
-  // and hands control of the next sphere drag over to targeting. Lifting
-  // the finger fires the armed ability with whatever was just drawn (or
-  // does nothing, for a card that needed an enclosed loop and didn't get
-  // one) and disarms.
-  let armedCardId = null;
-  const armedCardBadge = document.getElementById('armedCardBadge');
-  const CARD_LABELS = {
-    giant_meteor: '巨大隕石', light_pillar: '光の柱', poison_rain: '毒の雨'
-  };
-  function armCard(id){
-    armedCardId = id;
-    if (armedCardBadge){
-      armedCardBadge.textContent = CARD_LABELS[id] + ' 〉なぞって発動(タップで解除)';
-      armedCardBadge.classList.remove('hidden');
-      armedCardBadge.style.pointerEvents = 'auto';
-    }
-  }
-  function disarmCard(){
-    armedCardId = null;
-    if (armedCardBadge){
-      armedCardBadge.classList.add('hidden');
-      armedCardBadge.style.pointerEvents = 'none';
-    }
-  }
-  if (armedCardBadge){
-    armedCardBadge.addEventListener('click', () => { disarmCard(); clearAbilityLine(); abilityDrawing = false; });
-  }
-  function executeArmedCard(){
-    const id = armedCardId;
-    disarmCard();
-    if (id === 'giant_meteor') useGiantMeteor();
-    else if (id === 'light_pillar') useLightPillar();
-    else if (id === 'poison_rain') usePoisonRain();
-    else clearAbilityLine();
-  }
-
   // ---------- spawn-rate info panel: read-only, shows the current pink /
   // dark-pink spawn breakdown so it's easy to check what the settings menu
   // numbers actually add up to. ----------
@@ -6063,26 +5703,12 @@
       darkRows.push(['ブラックモブ(次の納品時)', fmt(meteorNextPct)]);
     }
     const light = team === 0 ? 'ピンク' : '水色';
-    makeGroup('通常の' + light + '陣地から', plainRows);
-    makeGroup('濃い' + light + '陣地から', darkRows);
-    const moonNowPct = Math.min(100, MOON_FRAGMENT_GRAY_MOB_BASE_CHANCE * 100 * moonCount);
-    const moonNextPct = Math.min(100, MOON_FRAGMENT_GRAY_MOB_BASE_CHANCE * 100 * (moonCount + 1));
-    makeGroup('月のかけら(どちらの' + light + '陣地にも納品可)', moonCount > 0 ? [
-      ['味方グレーモブ(現在の確率・納品' + moonCount + '個)', fmt(moonNowPct)],
-      ['味方グレーモブ(次の納品時)', fmt(moonNextPct)]
-    ] : [
-      ['味方グレーモブ(未納品)', '0%'],
-      ['味方グレーモブ(1個目の納品時)', fmt(moonNextPct)]
-    ]);
-    const liquidCount = counts[3] || 0;
-    const liquidNowPct = Math.min(100, POISON_LIQUID_PURPLE_BASE_CHANCE * 100 * liquidCount);
-    const liquidNextPct = Math.min(100, POISON_LIQUID_PURPLE_BASE_CHANCE * 100 * (liquidCount + 1));
-    makeGroup('毒液(どちらの' + light + '陣地にも納品可)', liquidCount > 0 ? [
-      ['味方パープルモブ(現在の確率・納品' + liquidCount + '回)', fmt(liquidNowPct)],
-      ['味方パープルモブ(次の納品時)', fmt(liquidNextPct)]
-    ] : [
-      ['味方パープルモブ(未納品)', '0%'],
-      ['味方パープルモブ(1回目の納品時)', fmt(liquidNextPct)]
+    makeGroup('レベル1の陣地', plainRows);
+    makeGroup('レベル2の陣地', darkRows);
+    makeGroup('レベル3の陣地', [
+      [team === 0 ? 'ピンクモブ' : 'ブルーモブ', fmt(Math.max(0, 100 - RED_BIG_CHANCE * 100 - RED_GOLD_CHANCE * 100))],
+      [team === 0 ? 'ビッグピンクモブ' : 'ビッグブルーモブ', fmt(RED_BIG_CHANCE * 100)],
+      [team === 0 ? 'ゴールドモブ' : 'シルバーモブ', fmt(RED_GOLD_CHANCE * 100)],
     ]);
   }
   function fragmentCountsFor(team){
@@ -6090,86 +5716,31 @@
     return netFragmentCounts();
   }
 
-  // ---------- panel toggle (settings <-> ability cards <-> spawn-rate info) ----------
+  // ---------- panel toggle (settings <-> spawn-rate info) ----------
   const settingsPanelEl = document.getElementById('settingsPanel');
-  const abilityPanelEl = document.getElementById('abilityPanel');
   const spawnInfoPanelEl = document.getElementById('spawnInfoPanel');
   const tabSlidersEl = document.getElementById('tabSliders');
-  const tabAbilitiesEl = document.getElementById('tabAbilities');
   const tabSpawnInfoEl = document.getElementById('tabSpawnInfo');
-  let activePanel = 'settings'; // 'settings' | 'ability' | 'spawnInfo'
+  let activePanel = 'settings'; // 'settings' | 'spawnInfo'
   function setActivePanel(panel){
-    const wasAbility = activePanel === 'ability';
     activePanel = panel;
-    abilityMode = panel === 'ability'; // kept for anything still reading this flag
     settingsPanelEl.classList.toggle('hidden', panel !== 'settings');
-    abilityPanelEl.classList.toggle('hidden', panel !== 'ability');
     spawnInfoPanelEl.classList.toggle('hidden', panel !== 'spawnInfo');
     tabSlidersEl.classList.toggle('active', panel === 'settings');
-    tabAbilitiesEl.classList.toggle('active', panel === 'ability');
     tabSpawnInfoEl.classList.toggle('active', panel === 'spawnInfo');
-    if (wasAbility && panel !== 'ability') clearAbilityLine();
     if (panel === 'spawnInfo') buildSpawnInfoPanel();
   }
-  tabSlidersEl.addEventListener('click', () => setActivePanel('settings'));
-  tabAbilitiesEl.addEventListener('click', () => setActivePanel('ability'));
-  tabSpawnInfoEl.addEventListener('click', () => setActivePanel('spawnInfo'));
-
-  // ---------- card swipe-up gesture ----------
-  function setupCardSwipe(cardEl, cardId, onActivate){
-    let startY = null, dragging = false, activePointerId = null;
-    const threshold = 55;
-    cardEl.style.touchAction = 'none';
-    function down(e){
-      if (dragging) return;
-      startY = e.clientY; dragging = true; activePointerId = e.pointerId;
-      cardEl.style.transition = 'none';
-      if (cardEl.setPointerCapture){
-        try { cardEl.setPointerCapture(e.pointerId); } catch(err){}
-      }
-    }
-    function move(e){
-      if (!dragging || e.pointerId !== activePointerId) return;
-      const dy = e.clientY - startY;
-      if (dy < 0) cardEl.style.transform = `translateY(${dy}px)`;
-    }
-    function up(e){
-      if (!dragging || e.pointerId !== activePointerId) return;
-      dragging = false; activePointerId = null;
-      const dy = e.clientY - startY;
-      cardEl.style.transition = 'transform 0.2s ease, opacity 0.2s ease';
-      if (dy < -threshold && strongCardUsed(cardId)){
-        // Already used this match — snap back without arming.
-        cardEl.style.transform = '';
-        return;
-      }
-      if (dy < -threshold){
-        // Arm immediately — the fly-away below is cosmetic only. Gating
-        // the actual activation behind that animation's timeout meant a
-        // fast real swipe-then-drag could start dragging the sphere
-        // before the card had actually armed, so the drag fell through
-        // to plain rotation instead of targeting.
-        onActivate();
-        cardEl.style.transform = 'translateY(-160px)';
-        cardEl.style.opacity = '0';
-        setTimeout(() => {
-          cardEl.style.transition = 'none';
-          cardEl.style.transform = '';
-          cardEl.style.opacity = '';
-          requestAnimationFrame(() => { cardEl.style.transition = 'transform 0.2s ease, opacity 0.2s ease'; });
-        }, 180);
-      } else {
-        cardEl.style.transform = '';
-      }
-    }
-    cardEl.addEventListener('pointerdown', down);
-    cardEl.addEventListener('pointermove', move);
-    cardEl.addEventListener('pointerup', up);
-    cardEl.addEventListener('pointercancel', up);
+  const panelCollapseBtnEl = document.getElementById('panelCollapseBtn');
+  function setPanelsCollapsed(on){
+    bottomPanelsEl.classList.toggle('collapsed', on);
+    panelCollapseBtnEl.textContent = on ? '▲ 開く' : '▼ しまう';
+    panelCollapseBtnEl.setAttribute('aria-label', on ? 'パネルを開く' : 'パネルをしまう');
   }
-  setupCardSwipe(document.getElementById('card_giant_meteor'), 'giant_meteor', () => armCard('giant_meteor'));
-  setupCardSwipe(document.getElementById('card_light_pillar'), 'light_pillar', () => armCard('light_pillar'));
-  setupCardSwipe(document.getElementById('card_poison_rain'), 'poison_rain', () => armCard('poison_rain'));
+  panelCollapseBtnEl.addEventListener('click', () => setPanelsCollapsed(!bottomPanelsEl.classList.contains('collapsed')));
+  tabSlidersEl.addEventListener('click', () => { setPanelsCollapsed(false); });
+  tabSpawnInfoEl.addEventListener('click', () => { setPanelsCollapsed(false); });
+  tabSlidersEl.addEventListener('click', () => setActivePanel('settings'));
+  tabSpawnInfoEl.addEventListener('click', () => setActivePanel('spawnInfo'));
 
   function hideHint(){
     if (hintShown){ hintShown = false; hintEl.style.opacity = '0'; }
@@ -6202,24 +5773,6 @@
     const p = getPos(evt);
 
     const canPlay = myTeam !== -1 && NET.phase === 'playing';
-    if (armedCardId && !canPlay) disarmCard();
-    if (armedCardId){
-      const worldPt = raycastSpherePoint(p.x, p.y);
-      if (!worldPt){
-        // Missed the sphere entirely — don't leave the card armed forever;
-        // that would silently swallow every touch afterward (including
-        // taps meant to move a character), since this branch runs before
-        // any other input handling.
-        disarmCard();
-        return;
-      }
-      const localDir = sphereGroup.worldToLocal(worldPt.clone()).normalize();
-      abilityDrawDense = [localDir.clone()];
-      abilityDrawScreenPts = [p];
-      setAbilityPathTube(abilityDrawDense);
-      abilityDrawing = true;
-      return;
-    }
 
     for (const ch of characters){
       if (!canPlay || ch.team !== myTeam) continue; // only your own dots answer to you
@@ -6295,16 +5848,6 @@
       const localDir = sphereGroup.worldToLocal(worldPt.clone()).normalize();
       drawingLocalPts.push(localDir);
       setCharPathTube(drawingChar, drawingLocalPts);
-    } else if (abilityDrawing){
-      evt.preventDefault();
-      const last = abilityDrawScreenPts[abilityDrawScreenPts.length - 1];
-      if (dist2D(p, last) < MIN_POINT_DIST_PX) return;
-      const worldPt = raycastSpherePoint(p.x, p.y);
-      if (!worldPt) return;
-      abilityDrawScreenPts.push(p);
-      const localDir = sphereGroup.worldToLocal(worldPt.clone()).normalize();
-      abilityDrawDense.push(localDir);
-      setAbilityPathTube(abilityDrawDense);
     } else if (isRotating && lastPointer){
       evt.preventDefault();
       const dx = p.x - lastPointer.x, dy = p.y - lastPointer.y;
@@ -6333,11 +5876,6 @@
       }
       drawingScreenPts = []; drawingLocalPts = []; drawingGridPath = [];
       drawingChar = null;
-    } else if (abilityDrawing){
-      evt.preventDefault();
-      abilityDrawing = false;
-      abilityDrawScreenPts = [];
-      executeArmedCard();
     } else if (tapCandidate){
       // A quick tap on empty ground no longer drops a meteor — that's now
       // only available via the long-press radial menu.
@@ -6639,8 +6177,8 @@
     let p = 0, c = 0;
     for (let i = 0; i < territoryGrid.length; i++){
       const v = territoryGrid[i];
-      if (v === PINK || v === DARK_PINK) p += CELL_WEIGHT[i];
-      else if (v === CYAN || v === DARK_CYAN) c += CELL_WEIGHT[i];
+      if (v === PINK || v === DARK_PINK || v === RED_PINK) p += CELL_WEIGHT[i];
+      else if (v === CYAN || v === DARK_CYAN || v === DEEP_BLUE) c += CELL_WEIGHT[i];
     }
     scoreFrac[0] = p / CELL_WEIGHT_TOTAL;
     scoreFrac[1] = c / CELL_WEIGHT_TOTAL;
@@ -6671,7 +6209,6 @@
     }
     nextBlackMobSpawnAt = now + NEUTRAL_SPAWN_MIN_MS + Math.random() * (NEUTRAL_SPAWN_MAX_MS - NEUTRAL_SPAWN_MIN_MS);
     nextGreenMobSpawnAt = now + NEUTRAL_SPAWN_MIN_MS + Math.random() * (NEUTRAL_SPAWN_MAX_MS - NEUTRAL_SPAWN_MIN_MS);
-    scheduleMoonMeteors();
     focusCameraOn(charOf(myTeam === 1 ? 1 : 0, 'A'));
     renderLobby();
   }
@@ -6681,18 +6218,14 @@
     computeScoresNow();
     NET.winner = scoreFrac[0] > scoreFrac[1] ? 0 : (scoreFrac[1] > scoreFrac[0] ? 1 : 2);
     drawingChar = null;
-    disarmCard();
-    clearAbilityLine();
     renderLobby();
   }
   function requestRematch(){
-    // Reload the host with the same fixed room ID so the same URL can be
-    // reused for unlimited rematches.
+    // A fresh page is the cleanest new board. Settings and this seat carry
+    // over; player 2's page notices the new match and reloads too.
     try { sessionStorage.setItem(RESET_SETTINGS_KEY, JSON.stringify(collectSettingsValues())); } catch (e){}
     try { sessionStorage.setItem('lr3d_seat', '1'); } catch (e){}
-    try { sessionStorage.setItem(FORCE_HOST_KEY, '1'); } catch (e){}
-    if (p2pRoom && typeof p2pRoom.closeForReload === 'function') p2pRoom.closeForReload();
-    setTimeout(() => location.reload(), 120);
+    location.reload();
   }
 
   // ---------- settings travel as one flat array, in menu order ----------
@@ -6710,7 +6243,7 @@
   }
 
   // ---------- host: building a snapshot ----------
-  NET.budget = 3700;
+  NET.budget = 9000;
   NET.snapCount = 0;
   NET.rowCursor = 0;
   NET.lastSendAt = 0;
@@ -6722,10 +6255,7 @@
     };
     for (let gx = 0; gx < GRID_W; gx++){
       const idx = gy * GRID_W + gx;
-      let v = territoryGrid[idx];
-      if (farmCells.has(idx)){
-        if (v === DARK_PINK) v = 8; else if (v === DARK_CYAN) v = 9;
-      }
+      const v = territoryGrid[idx];
       if (v === prev) run++;
       else { flush(); prev = v; run = 1; }
     }
@@ -6744,7 +6274,6 @@
       sc: [Math.round(scoreFrac[0] * 1000), Math.round(scoreFrac[1] * 1000)],
       w: NET.winner === null ? -1 : NET.winner,
       mc: meteorImpactCount,
-      cd: [teamCardUsed(1, 'giant_meteor') ? 1 : 0, teamCardUsed(1, 'light_pillar') ? 1 : 0, teamCardUsed(1, 'poison_rain') ? 1 : 0],
       fc: [meteorFragmentDeliveryCount[1], crystalFragmentDeliveryCount[1], moonFragmentDeliveryCount[1], poisonLiquidDeliveryCount[1]]
     };
     let c = '';
@@ -6752,7 +6281,7 @@
     for (const ch of characters){
       const flags = (ch.alive ? 1 : 0) | (ch.moving ? 2 : 0) | (ch.carryingFragment === 'meteor' ? 4 : 0) | (ch.carryingFragment === 'crystal' ? 8 : 0) | (ch.carryingFragment === 'moon' ? 16 : 0) | (ch.poisonLiquid ? 32 : 0);
       const frac = ch.moving && ch.totalAngular > 0 ? Math.min(1, ch.traveledAngular / ch.totalAngular) : 0;
-      c += encDir(ch.dir) + enc2(Math.round(Math.max(0, ch.hp) / ch.maxHp * 4095)) + enc1(flags) + enc1(ch.watermelons || 0)
+      c += encDir(ch.dir) + enc2(Math.round(Math.max(0, ch.hp) / ch.maxHp * 4095)) + enc1(flags)
         + enc1(ch.trailEpoch || 0) + enc1(ch.pathVer || 0) + enc2(Math.round(frac * 4095));
       if (ch.team === 1 && ch.moving && ch.routePts){
         pa['ABC'.indexOf(ch.role)] = ch.routePts.map(encDir).join('');
@@ -6793,20 +6322,6 @@
     o.eq = evs.length ? evs[0].q : netEvSeq + 1;
     o.ev = evs.map(e => e.s);
     size += 20;
-    // Watermelon crops, a few times a second.
-    if (NET.snapCount % 4 === 0 || NET.cropsDue){
-      const cr = [];
-      let cc = '', k = 0;
-      for (const crop of crops){
-        if (k >= 320) break;
-        cc += encDir(crop.dir) + enc1(Math.round(Math.min(1, crop.progress) * 63)) + enc1(crop.team || 0);
-        if (++k % 160 === 0){ cr.push(cc); cc = ''; }
-      }
-      if (cc) cr.push(cc);
-      const len = cr.reduce((a, s) => a + s.length + 3, 8);
-      if (size + len < budget - 400){ o.cr = cr; size += len; NET.cropsDue = false; }
-      else NET.cropsDue = true;
-    }
     // Host-side settings, every few seconds.
     if (NET.snapCount % 40 === 1){
       const st = settingsArray();
@@ -6941,9 +6456,6 @@
       case 'route': if (ch) commitFreeRoute(ch, a.path); break;
       case 'send': if (ch) sendCharacterTo(ch, a.dir); break;
       case 'meteor': launchMeteor(a.dir, dirToUV(a.dir)); break;
-      case 'giant': fireGiantMeteor(team, a.dir); break;
-      case 'pillar': fireLightPillar(team, a.cells); break;
-      case 'rain': firePoisonRain(team, a.path); break;
     }
   }
   function encodeAction(a){
@@ -6954,9 +6466,6 @@
       }
       case 'send': return 'D' + a.role + encDir(a.dir);
       case 'meteor': return 'M' + encDir(a.dir);
-      case 'giant': return 'G' + encDir(a.dir);
-      case 'pillar': return 'P' + a.cells.map(enc3).join('');
-      case 'rain': return 'Q' + simplifyRoute(a.path, 60).map(encDir).join('');
     }
     return null;
   }
@@ -6972,20 +6481,7 @@
       return path.length ? { type: 'route', role: s[1], path } : null;
     }
     if (k === 'D') return roleOk(s[1]) && s.length >= 6 ? { type: 'send', role: s[1], dir: decDir(s, 2) } : null;
-    if ((k === 'M' || k === 'G') && s.length >= 5) return { type: k === 'M' ? 'meteor' : 'giant', dir: decDir(s, 1) };
-    if (k === 'Q'){
-      const path = [];
-      for (let i = 1; i + 4 <= s.length; i += 4) path.push(decDir(s, i));
-      return path.length >= 3 ? { type: 'rain', path } : null;
-    }
-    if (k === 'P'){
-      const cells = [];
-      for (let i = 1; i + 2 < s.length + 0 && i + 3 <= s.length; i += 3){
-        const idx = dec3(s, i);
-        if (idx < GRID_W * GRID_H) cells.push(idx);
-      }
-      return cells.length ? { type: 'pillar', cells: cells.slice(0, 8) } : null;
-    }
+    if (k === 'M' && s.length >= 5) return { type: 'meteor', dir: decDir(s, 1) };
     return null;
   }
   NET.lastCmdSeq = 0;
@@ -7025,11 +6521,6 @@
     if (NET.phase === 'ended') return NET.lastT || MATCH_MS;
     return 0;
   }
-  function netCardUsed(cardId){
-    const cd = NET.netCd;
-    if (!cd || myTeam !== 1) return false;
-    return !!(cardId === 'giant_meteor' ? cd[0] : cardId === 'light_pillar' ? cd[1] : cd[2]);
-  }
   function netFragmentCounts(){ return NET.netFc || [0, 0, 0, 0]; }
 
   function applySnapshot(o){
@@ -7048,7 +6539,6 @@
     NET.lastRecvAt = now;
     NET.netScores = Array.isArray(o.sc) ? o.sc : null;
     NET.winner = o.w === 0 || o.w === 1 || o.w === 2 ? o.w : null;
-    NET.netCd = Array.isArray(o.cd) ? o.cd : null;
     NET.netFc = Array.isArray(o.fc) ? o.fc : null;
     if (typeof o.mc === 'number' && meteorCountEl){ meteorImpactCount = o.mc; meteorCountEl.textContent = o.mc; }
     if (Array.isArray(o.st)) applySettingsArray(o.st);
@@ -7056,7 +6546,6 @@
     if (Array.isArray(o.mb)) applyNetMobs(o.mb);
     if (typeof o.lm === 'string') applyNetLandmarks(o.lm);
     if (typeof o.ho === 'string') applyNetHoles(o.ho);
-    if (Array.isArray(o.cr)) applyNetCrops(o.cr);
     if (Array.isArray(o.tr)) for (const r of o.tr) if (typeof r === 'string') applyNetTerrRow(r);
     applyNetEvents(o.eq, o.ev);
     if (myTeam >= 0 && (NET.needFocus || (prevPhase === 'lobby' && NET.phase === 'playing'))){
@@ -7064,7 +6553,7 @@
       focusCameraOn(charOf(myTeam, 'A'));
     }
     if (prevPhase !== NET.phase){
-      if (NET.phase !== 'playing'){ drawingChar = null; disarmCard(); }
+      if (NET.phase !== 'playing'){ drawingChar = null; }
       renderLobby();
     }
   }
@@ -7074,15 +6563,14 @@
     const now = performance.now();
     for (let i = 0; i < characters.length; i++){
       const ch = characters[i];
-      const b = i * 12;
-      if (c.length < b + 12) break;
+      const b = i * 11;
+      if (c.length < b + 11) break;
       const d = decDir(c, b, new THREE.Vector3());
       const hpF = dec2(c, b + 4) / 4095;
       const flags = dec1(c, b + 6);
-      const melons = dec1(c, b + 7);
-      const ep = dec1(c, b + 8);
-      const pv = dec1(c, b + 9);
-      const tf = dec2(c, b + 10) / 4095;
+      const ep = dec1(c, b + 7);
+      const pv = dec1(c, b + 8);
+      const tf = dec2(c, b + 9) / 4095;
       const alive = !!(flags & 1), moving = !!(flags & 2);
       const carry = (flags & 4) ? 'meteor' : (flags & 8) ? 'crystal' : (flags & 16) ? 'moon' : null;
       if (!ch.netTarget){ ch.netTarget = d.clone(); placeCharacterAt(ch, d); }
@@ -7107,11 +6595,6 @@
       if (wantLiquid !== !!ch.poisonLiquid){
         ch.poisonLiquid = wantLiquid;
         if (wantLiquid) attachLiquidMesh(ch); else detachLiquidMesh(ch);
-      }
-      ch.watermelons = melons;
-      if (ch.role === 'A'){
-        if (!ch.stockLabel){ ch.stockLabel = makeStockLabelSprite(); sphereGroup.add(ch.stockLabel); }
-        refreshStockLabel(ch);
       }
       if (moving !== ch.moving || ep !== ch.netEpoch){
         if (ch.gTrail && ch.gTrail.size){ ch.gTrail.clear(); NET.glowRebuild = true; }
@@ -7237,7 +6720,7 @@
         const type = dec1(str, i + 2);
         const fl = dec1(str, i + 3);
         const spin = !!(fl & 1), kb = !!(fl & 2);
-        if (type > 18) continue;
+        if (type > 22) continue;
         const hpF = dec1(str, i + 8) / 63;
         let r = mobReplicas.get(id);
         if (r && r.type !== type){ disposeReplica(r); mobReplicas.delete(id); r = null; }
@@ -7311,45 +6794,24 @@
       if (!seen.has(id)){ sphereGroup.remove(h.mesh); netHoles.delete(id); }
     }
   }
-  const netCropMeshes = [];
-  function applyNetCrops(chunks){
-    let n = 0;
-    const d = new THREE.Vector3();
-    for (const str of chunks){
-      if (typeof str !== 'string') continue;
-      for (let i = 0; i + 6 <= str.length; i += 6){
-        decDir(str, i, d);
-        const prog = dec1(str, i + 4) / 63;
-        let m = netCropMeshes[n];
-        if (!m){ m = new THREE.Mesh(watermelonGeo, watermelonMat); sphereGroup.add(m); netCropMeshes.push(m); }
-        m.visible = true;
-        m.quaternion.setFromUnitVectors(ABILITY_UP, d);
-        const r = R * CROP_RADIUS * 0.85 * (0.25 + 0.75 * prog);
-        m.scale.setScalar(r);
-        m.position.copy(d).multiplyScalar(R * 1.02 + r * 0.55);
-        n++;
-      }
-    }
-    for (let k = n; k < netCropMeshes.length; k++) netCropMeshes[k].visible = false;
-  }
   function applyNetTerrRow(r){
     const gy = dec2(r, 0);
     if (gy >= GRID_H) return;
     let x = 0;
     for (let i = 2; i + 1 < r.length && x < GRID_W; i += 2){
       const v = dec1(r, i), len = dec1(r, i + 1);
-      const farm = v === 8 || v === 9;
-      const real = v === 8 ? DARK_PINK : (v === 9 ? DARK_CYAN : v);
-      if (real > 7) return;
+      const real = v;
+      // Anything the host can paint: 0..7, poison pools (10, 11) and the
+      // level-3 red / navy ground (12, 13). (This used to stop at 7, which
+      // silently dropped the rest of any row containing level-3 ground or
+      // a pool on player 2's screen.)
+      if (real > 13) return;
       for (let k = 0; k < len && x < GRID_W; k++, x++){
         const idx = gy * GRID_W + x;
         setCellRaw(idx, real);
-        if (farm){ if (!farmCells.has(idx)){ farmCells.add(idx); farmDirty = true; } }
-        else if (farmCells.delete(idx)) farmDirty = true;
       }
     }
   }
-  const netMelons = [];
   function applyNetEvents(eq, ev){
     if (!Array.isArray(ev) || typeof eq !== 'number') return;
     if (NET.lastEv === undefined){ NET.lastEv = eq + ev.length - 1; return; }
@@ -7376,15 +6838,8 @@
       spawnPoisonDropVisual(decDir(s, 1), null);
     } else if (k === 'v' && s.length >= 9){
       spawnPoisonOrbVisual(decDir(s, 1), decDir(s, 5), null);
-    } else if (k === 'p' && s.length >= 6){
-      spawnLightPillarEffect(decDir(s, 1), 0, null, dec1(s, 5));
     } else if (k === 'l' && s.length >= 9){
       spawnGreenLaser(decDir(s, 1), decDir(s, 5), true);
-    } else if (k === 'w' && s.length >= 9){
-      const mesh = new THREE.Mesh(watermelonGeo, watermelonMat);
-      mesh.scale.setScalar(R * CROP_RADIUS * 0.6);
-      sphereGroup.add(mesh);
-      netMelons.push({ mesh, from: decDir(s, 1), to: decDir(s, 5), t: 0 });
     }
   }
 
@@ -7400,7 +6855,6 @@
       }
       if (ch.fragmentMesh) ch.fragmentMesh.position.copy(ch.dir).multiplyScalar(R * 1.02 + FRAGMENT_HEIGHT_OFFSET);
       placeLiquidMesh(ch);
-      if (ch.stockLabel) ch.stockLabel.position.copy(ch.dir).multiplyScalar(R * 1.02 + CHAR_LOCAL_R + 0.38);
       if (ch.moving){
         if (!ch.gTrail) ch.gTrail = new Set();
         const rgb = glowRgbForRole(ch.role);
@@ -7413,7 +6867,6 @@
       }
     }
     for (const ch of characters){
-      if (ch.stockLabel && !ch.alive) ch.stockLabel.visible = false;
       if (ch.role === 'C') updateWerewolfEars(ch);
     }
     if (NET.glowRebuild){
@@ -7439,20 +6892,6 @@
       if (r.spinT > 0){ r.spinT -= dt; applyMobSpin(r.mesh, Math.max(0, r.spinT)); }
       updateAuraRingTransform(r.auraRing, r.dir, r.range);
       if (r.hpBar) r.hpBar.position.copy(r.dir).multiplyScalar(R * 1.02 + r.vr + 0.12);
-    }
-    for (let i = netMelons.length - 1; i >= 0; i--){
-      const w = netMelons[i];
-      w.t += dt;
-      const p = Math.min(1, w.t / 0.45);
-      const d = slerpVec(w.from, w.to, p).normalize();
-      w.mesh.position.copy(d).multiplyScalar(R * 1.04 + Math.sin(Math.PI * p) * 0.35);
-      w.mesh.rotation.x += dt * 10;
-      if (p >= 1){ sphereGroup.remove(w.mesh); netMelons.splice(i, 1); }
-    }
-    if (farmDirty && now - lastFarmRebuildAt > 250){
-      rebuildFarmOutline();
-      farmDirty = false;
-      lastFarmRebuildAt = now;
     }
   }
 
@@ -7540,7 +6979,7 @@
   function applySeatUi(){
     const host = isSimHost();
     tabSlidersEl.classList.toggle('hidden', !host);
-    if (!host && activePanel === 'settings') setActivePanel('ability');
+    if (!host && activePanel === 'settings') setActivePanel('spawnInfo');
     bottomPanelsEl.classList.toggle('hidden', myTeam === -1);
     // Route lines follow whose side you're on.
     for (const ch of characters){
@@ -7572,9 +7011,10 @@
     }
     renderLobby();
   }
-  function goOffline(){
+  function goOffline(why){
     if (NET.offline) return;
     NET.offline = true;
+    NET.offlineWhy = (why && (why.code || why.message)) ? String(why.code || '') + (why.message ? ' ' + String(why.message).slice(0, 80) : '') : (typeof why === 'string' ? why : '');
     NET.room = null;
     NET.broadcasting = false;
     if (NET.phase === 'lobby' || NET.seat === 1){ NET.seat = 1; myTeam = 0; NET.phase = NET.phase === 'lobby' ? 'lobby' : NET.phase; }
@@ -7586,7 +7026,7 @@
     const o1 = NET.offline ? null : seatOwnerPeer(1);
     const o2 = NET.offline ? null : seatOwnerPeer(2);
     if (NET.offline){
-      lobbyStatusEl.textContent = 'オンラインに接続できないため、ひとりで試すモードです。水色陣営は動きません。';
+      lobbyStatusEl.textContent = 'オンラインに接続できないため、ひとりで試すモードです。水色陣営は動きません。(通信環境を確認してページを開き直してください)' + (NET.offlineWhy ? ' [原因: ' + NET.offlineWhy + ']' : '');
       seatStateEls[1].textContent = 'あなた'; seatStateEls[1].className = 'seatState me';
       seatStateEls[2].textContent = '接続なし'; seatStateEls[2].className = 'seatState';
       seatBtnEls[1].disabled = true; seatBtnEls[2].disabled = true;
@@ -7615,388 +7055,45 @@
     }
     joinP2BtnEl.classList.toggle('hidden', !(NET.phase === 'playing' && !NET.offline && NET.room && NET.seat === 0 && !o2 && NET.hostPresent));
   }
-  // ---------- public URL P2P networking ----------
-  // Public WebRTC networking via PeerJS.  The connection layer is deliberately
-  // tolerant of temporary signalling-server disconnects: PeerJS documents
-  // `disconnected` + `reconnect()` for this case, so we retry instead of
-  // immediately switching the game to offline mode.
-  const shareBoxEl = document.getElementById('shareBox');
-  const shareUrlEl = document.getElementById('shareUrl');
-  const copyShareBtnEl = document.getElementById('copyShareBtn');
-  const shareStatusEl = document.getElementById('shareStatus');
-  const netReconnectBtnEl = document.getElementById('netReconnectBtn');
-  let p2pRoom = null;
-
-  function netErrorText(e){
-    const t = e && (e.type || e.name || '');
-    const map = {
-      'network':'ネットワーク接続エラー',
-      'server-error':'PeerJSサーバーに接続できません',
-      'socket-error':'通信ソケットでエラーが発生しました',
-      'socket-closed':'通信ソケットが閉じました',
-      'peer-unavailable':'相手の部屋が見つかりません',
-      'webrtc':'WebRTC接続エラー',
-      'browser-incompatible':'このブラウザはWebRTCに対応していません',
-      'ssl-unavailable':'HTTPS接続でPeerJSサーバーを利用できません',
-      'unavailable-id':'部屋IDが使用中です',
-      'disconnected':'PeerJSサーバーとの接続が切れました'
-    };
-    return map[t] || (e && e.message) || 'オンライン接続エラー';
-  }
-
-  function showNetRetry(message, hardOffline=false){
-    if (message) lobbyStatusEl.textContent = message;
-    netReconnectBtnEl.classList.remove('hidden');
-    if (hardOffline) netReconnectBtnEl.textContent = 'もう一度オンライン接続';
-  }
-  function hideNetRetry(){
-    netReconnectBtnEl.classList.add('hidden');
-    netReconnectBtnEl.textContent = 'オンラインに再接続';
-  }
-
-  // A single, fixed PeerJS ID is used for the normal entry URL.
-  // Whoever opens the URL first becomes the host; later visitors become guests.
-  // The ID is only a rendezvous name on PeerJS Cloud, not a game-data server.
-  const FIXED_ROOM_ID = 'emishi34-territory-game-room-v1';
-  const FORCE_HOST_KEY = 'lr3d_force_fixed_host';
-
-  class PublicP2PRoom {
-    constructor(hostId){
-      this.fixedRoom = !hostId;
-      this.isHost = false;
-      this.hostId = hostId || FIXED_ROOM_ID;
-      this.peer = null;
-      this.conn = null;
-      this.ownPresence = {};
-      this.remotePresence = {};
-      this.peersCb = null;
-      this.connCb = null;
-      this.errCb = null;
-      this.opened = false;
-      this.remoteOpen = false;
-      this.retryTimer = null;
-      this.retryCount = 0;
-      this.destroyed = false;
-      this.lastError = '';
-      this.reconnecting = false;
-      this.fixedHostClaiming = false;
-      this.forceHost = false;
-      this.forceHostAttempts = 0;
-      try {
-        this.forceHost = sessionStorage.getItem(FORCE_HOST_KEY) === '1';
-        if (this.forceHost) sessionStorage.removeItem(FORCE_HOST_KEY);
-      } catch (e){}
+  // Room code lives in the URL (#r=xxxx) so the link itself is the invite.
+  const ROOM_CODE = (() => {
+    let code = '';
+    const m = /(?:^#|&)r=([a-z0-9]{4,24})/i.exec(location.hash || '');
+    if (m) code = m[1].toLowerCase();
+    if (!code){
+      const abc = 'abcdefghjkmnpqrstuvwxyz23456789';
+      for (let i = 0; i < 8; i++) code += abc[Math.floor(Math.random() * abc.length)];
+      try { history.replaceState(null, '', location.pathname + location.search + '#r=' + code); } catch (e){ location.hash = 'r=' + code; }
     }
-    onConnection(ok, fail){ this.connCb = ok; this.errCb = fail; }
-    onPeers(cb, fail){ this.peersCb = cb; this.errCb = fail; this.emitPeers(); }
-    connected(){
-      if (!this.opened) return false;
-      return this.isHost ? !this.destroyed : this.remoteOpen;
-    }
-    async start(){
-      await this.ensurePeerLibrary();
-      if (this.fixedRoom) return this.createFixedRoomPeer();
-      this.isHost = false;
-      return this.createPeer();
-    }
-    ensurePeerLibrary(){
-      if (window.Peer) return Promise.resolve();
-      // Fallback CDN in case the primary jsDelivr request was blocked/failed.
-      return new Promise((resolve, reject) => {
-        const src = 'https://unpkg.com/peerjs@1.5.5/dist/peerjs.min.js';
-        const sc = document.createElement('script');
-        sc.src = src;
-        sc.onload = () => window.Peer ? resolve() : reject(new Error('PeerJSの読み込みに失敗しました'));
-        sc.onerror = () => reject(new Error('PeerJSのCDNに接続できません'));
-        document.head.appendChild(sc);
-      });
-    }
-    createPeer(id){
-      if (!window.Peer) throw new Error('PeerJSの読み込みに失敗しました');
-      clearTimeout(this.retryTimer);
-      this.destroyed = false;
-      this.opened = false;
-      this.remoteOpen = false;
-      this.reconnecting = false;
-      this.peer = id ? new Peer(id, { debug: 1 }) : new Peer({ debug: 1 });
-      this.bindPeerEvents();
-      return Promise.resolve();
-    }
-    createFixedRoomPeer(){
-      // First visitor claims the well-known ID. If it is already occupied,
-      // this browser becomes player 2 and connects to that fixed ID.
-      this.isHost = true;
-      this.hostId = FIXED_ROOM_ID;
-      this.fixedHostClaiming = true;
-      this.createPeer(FIXED_ROOM_ID);
-      return Promise.resolve();
-    }
-    switchFixedHostToGuest(){
-      if (!this.fixedRoom || !this.fixedHostClaiming) return;
-      this.fixedHostClaiming = false;
-      this.isHost = false;
-      this.hostId = FIXED_ROOM_ID;
-      try { if (this.peer && !this.peer.destroyed) this.peer.destroy(); } catch (e){}
-      this.peer = null;
-      this.opened = false;
-      this.remoteOpen = false;
-      // Use a normal random Peer ID for the guest.
-      setTimeout(() => {
-        if (this.destroyed) return;
-        try { this.createPeer(); }
-        catch (e){ this.lastError = netErrorText(e); this.scheduleReconnect(); }
-      }, 50);
-    }
-    bindPeerEvents(){
-      this.peer.on('open', (id) => {
-        this.opened = true;
-        this.retryCount = 0;
-        this.reconnecting = false;
-        hideNetRetry();
-        if (this.isHost){
-          this.hostId = id;
-          const u = new URL(location.href);
-          if (this.fixedRoom) u.search = '';
-          else u.searchParams.set('room', id);
-          shareUrlEl.value = u.toString();
-          shareBoxEl.classList.remove('hidden');
-          shareStatusEl.textContent = this.fixedRoom
-            ? 'オンライン接続中。このURLを保存しておけば、次回以降も同じURLで対戦できます。'
-            : 'オンライン接続中。相手がこのURLを開くと水色陣営に参加できます。';
-          this.emitPeers();
-          this.connCb && this.connCb({host:true});
-        } else {
-          lobbyStatusEl.textContent = 'プレイヤー1へ接続しています…';
-          this.connectToHost();
-        }
-      });
-      this.peer.on('connection', (conn) => {
-        if (!this.isHost) return;
-        if (this.conn && this.conn.open) { conn.close(); return; }
-        this.attachConnection(conn);
-      });
-      this.peer.on('disconnected', () => {
-        // Existing WebRTC data connections can remain alive while signalling
-        // is temporarily disconnected. Reconnect the PeerServer instead of
-        // declaring the whole game offline immediately.
-        this.reconnecting = true;
-        showNetRetry('オンライン接続が一時的に切れました。再接続しています…');
-        this.scheduleReconnect();
-      });
-      this.peer.on('error', (e) => {
-        this.lastError = netErrorText(e);
-        const type = e && e.type;
-        console.warn('[PeerJS]', type, e);
-        if (type === 'network' || type === 'socket-error' || type === 'socket-closed' || type === 'disconnected' || type === 'server-error'){
-          showNetRetry(this.lastError + '。再接続しています…');
-          this.scheduleReconnect();
-          return;
-        }
-        if (type === 'unavailable-id' && this.fixedHostClaiming){
-          if (this.forceHost && this.fixedRoom && this.forceHostAttempts < 12){
-            // The host is refreshing for a rematch. Give the old PeerJS ID a
-            // few seconds to be released before giving up and joining as guest.
-            this.fixedHostClaiming = false;
-            try { if (this.peer && !this.peer.destroyed) this.peer.destroy(); } catch (e){}
-            this.peer = null;
-            this.forceHostAttempts++;
-            setTimeout(() => {
-              if (this.destroyed) return;
-              this.fixedHostClaiming = true;
-              this.isHost = true;
-              this.hostId = FIXED_ROOM_ID;
-              this.createPeer(FIXED_ROOM_ID);
-            }, 1000);
-          } else {
-            // The fixed room name is already owned: this visitor becomes a guest.
-            this.switchFixedHostToGuest();
-          }
-          return;
-        }
-        if (type === 'peer-unavailable'){
-          // A guest can open the shared URL slightly before the host has
-          // finished opening its PeerServer connection. Retry for a while.
-          showNetRetry('プレイヤー1を探しています…');
-          this.scheduleReconnect();
-          return;
-        }
-        showNetRetry(this.lastError, true);
-        if (this.errCb) this.errCb(e);
-      });
-    }
-    scheduleReconnect(){
-      if (this.retryTimer || this.destroyed) return;
-      const delay = Math.min(8000, 1000 * Math.max(1, this.retryCount + 1));
-      this.retryCount++;
-      this.retryTimer = setTimeout(() => {
-        this.retryTimer = null;
-        this.reconnectNow();
-      }, delay);
-    }
-    reconnectNow(){
-      if (!this.peer || this.destroyed) return;
-      try {
-        if (this.peer.disconnected && !this.peer.destroyed){
-          this.peer.reconnect();
-          return;
-        }
-        if (this.peer.destroyed){
-          // A destroyed peer cannot be reconnected. In the fixed room, hosts
-          // reclaim the well-known ID; guests get a fresh random ID.
-          if (this.fixedRoom && this.isHost){
-            this.fixedHostClaiming = true;
-            this.createPeer(FIXED_ROOM_ID);
-          } else {
-            this.createPeer();
-          }
-          return;
-        }
-        if (!this.isHost && !this.remoteOpen) this.connectToHost();
-      } catch (e){
-        this.lastError = netErrorText(e);
-        showNetRetry(this.lastError + '。再接続を続けます…');
-        this.scheduleReconnect();
-      }
-    }
-    connectToHost(){
-      if (!this.hostId || !this.peer || this.peer.destroyed) return;
-      if (this.conn && this.conn.open) return;
-      const conn = this.peer.connect(this.hostId, { reliable:true, serialization:'json' });
-      this.attachConnection(conn);
-    }
-    attachConnection(conn){
-      this.conn = conn;
-      conn.on('open', () => {
-        this.remoteOpen = true;
-        this.retryCount = 0;
-        hideNetRetry();
-        this.sendPresence();
-        this.emitPeers();
-        this.connCb && this.connCb(conn);
-      });
-      conn.on('data', (msg) => {
-        if (!msg || typeof msg !== 'object') return;
-        if (msg.type === 'presence'){
-          this.remotePresence = Object.assign({}, this.remotePresence, msg.data || {});
-          this.emitPeers();
-        }
-      });
-      conn.on('close', () => {
-        this.remoteOpen = false;
-        this.conn = null;
-        this.remotePresence = {};
-        this.emitPeers();
-        renderLobby();
-        if (!this.isHost && !this.destroyed){
-          showNetRetry('プレイヤー1との接続が切れました。再接続しています…');
-          this.scheduleReconnect();
-        }
-      });
-      conn.on('error', (e) => {
-        this.lastError = netErrorText(e);
-        console.warn('[PeerJS data connection]', e);
-        showNetRetry(this.lastError + '。再接続しています…');
-        if (!this.isHost) this.scheduleReconnect();
-      });
-    }
-    sendPresence(){
-      if (this.conn && this.conn.open) this.conn.send({type:'presence', data:this.ownPresence});
-    }
-    presence(partial){
-      this.ownPresence = Object.assign({}, this.ownPresence, partial || {});
-      this.sendPresence();
-      this.emitPeers();
-      return Promise.resolve();
-    }
-    emitPeers(){
-      if (!this.peersCb || !this.peer) return;
-      const self = { peer:this.peer.id || 'self', kind:'viewer', presence:this.ownPresence, isMe:true, sameTab:true };
-      const arr = [self];
-      if (this.remoteOpen && this.conn){
-        arr.push({ peer:this.conn.peer, kind:'viewer', presence:this.remotePresence, isMe:false, sameTab:false });
-      }
-      this.peersCb(arr);
-    }
-    retry(){
-      hideNetRetry();
-      this.retryCount = 0;
-      if (this.peer && this.peer.disconnected && !this.peer.destroyed){
-        try { this.peer.reconnect(); return; } catch (e){}
-      }
-      if (!this.peer || this.peer.destroyed){
-        if (this.fixedRoom && this.isHost){
-          this.fixedHostClaiming = true;
-          this.createPeer(FIXED_ROOM_ID);
-        } else {
-          this.createPeer();
-        }
-      } else if (!this.isHost && !this.remoteOpen){
-        this.connectToHost();
-      }
-    }
-    closeForReload(){
-      clearTimeout(this.retryTimer);
-      this.destroyed = true;
-      try { if (this.conn) this.conn.close(); } catch (e){}
-      try { if (this.peer && !this.peer.destroyed) this.peer.destroy(); } catch (e){}
-    }
-  }
-
-  copyShareBtnEl.addEventListener('click', async () => {
-    const value = shareUrlEl.value;
-    if (!value) return;
-    try {
-      await navigator.clipboard.writeText(value);
-      shareStatusEl.textContent = 'コピーしました。LINEなどで相手に送ってください。';
-    } catch (e){
-      shareUrlEl.focus(); shareUrlEl.select();
-      shareStatusEl.textContent = 'URLを選択しました。コピーして相手に送ってください。';
-    }
+    return code;
+  })();
+  const inviteUrlEl = document.getElementById('inviteUrl');
+  const copyInviteBtnEl = document.getElementById('copyInviteBtn');
+  const inviteUrl = location.origin + location.pathname + location.search + '#r=' + ROOM_CODE;
+  inviteUrlEl.value = inviteUrl;
+  inviteUrlEl.addEventListener('focus', () => inviteUrlEl.select());
+  copyInviteBtnEl.addEventListener('click', async () => {
+    let ok = false;
+    try { await navigator.clipboard.writeText(inviteUrl); ok = true; } catch (e){}
+    if (!ok){ try { inviteUrlEl.select(); ok = document.execCommand('copy'); } catch (e){} }
+    copyInviteBtnEl.textContent = ok ? 'コピー済み' : '長押しでコピー';
+    setTimeout(() => { copyInviteBtnEl.textContent = 'コピー'; }, 1800);
   });
-  netReconnectBtnEl.addEventListener('click', () => {
-    if (p2pRoom){
-      lobbyStatusEl.textContent = 'オンラインへ再接続しています…';
-      p2pRoom.retry();
-    } else {
-      location.reload();
-    }
-  });
-
-  (async function initNet(){
-    try {
-      const params = new URLSearchParams(location.search);
-      const hostId = params.get('room');
-      const room = new PublicP2PRoom(hostId);
-      p2pRoom = room;
-      NET.room = room;
-      NET.offline = false;
-      room.onConnection(() => renderLobby(), (e) => {
-        console.error('[NET]', e);
-        showNetRetry('オンライン接続エラー: ' + netErrorText(e), true);
-        renderLobby();
-      });
-      room.onPeers((peers) => onPeersChanged(peers), (e) => {
-        console.error('[NET peers]', e);
-        showNetRetry('オンライン接続エラー: ' + netErrorText(e), true);
-        renderLobby();
-      });
-      await room.start();
-      if (room.isHost){
-        // The first visitor to the fixed URL becomes player 1.
-        setTimeout(() => { if (!NET.seat && !NET.offline) claimSeat(1); }, 300);
-      } else {
-        shareBoxEl.classList.add('hidden');
-        lobbyStatusEl.textContent = 'プレイヤー1へ接続しています…';
-        // Anyone else opening the same URL automatically becomes player 2.
-        setTimeout(() => { if (!NET.seat && !NET.offline) claimSeat(2); }, 800);
-      }
+  (function initNet(){
+    let room = null;
+    try { room = window.createPeerRoom(ROOM_CODE); } catch (e){ goOffline('接続の準備に失敗: ' + (e && e.message || '')); return; }
+    NET.room = room;
+    let autoTried = false;
+    room.onConnection((c) => {
       renderLobby();
-    } catch (e){
-      console.error('[NET init]', e);
-      showNetRetry('オンライン機能の読み込みに失敗しました: ' + netErrorText(e), true);
-      // Keep the game usable offline, but do not hide the actual error.
-      goOffline();
-    }
+      if (c && !autoTried && NET.autoSeat){
+        autoTried = true;
+        // Give everyone already here a moment to show up before reclaiming.
+        setTimeout(() => { if (!NET.seat && NET.autoSeat) claimSeat(NET.autoSeat); }, 1500);
+      }
+    }, (e) => goOffline(e));
+    room.onPeers((change) => onPeersChanged(change.peers), (e) => goOffline(e));
+    renderLobby();
   })();
   applySeatUi();
   renderLobby();
@@ -8097,6 +7194,7 @@
         netProcessGuestCommands();
         updateCharacterMovement();
         updateCharacterFragments();
+        updateMoonCharges(t);
         updateCharacterAbilities(dt, t);
         updateRespawns(t);
         updateMobs(dt, t);
@@ -8104,7 +7202,6 @@
         updatePassiveRegen(dt, t);
         updatePoisonSystem(dt, t);
         updateLandmarks(t);
-        updateMoonMeteors();
       }
       updateScores(t);
       netHostTick(t);
@@ -8112,14 +7209,12 @@
       guestFrame(dt, t);
     }
     updateFloatingNumbers(dt);
-    updateCardCooldownDisplays(t);
     if (activePanel === 'spawnInfo' && t - lastSpawnInfoRefreshAt > 1000){
       buildSpawnInfoPanel();
       lastSpawnInfoRefreshAt = t;
     }
     updateMeteors(dt);
     updatePoisonVisuals(dt);
-    updatePillarEffects(dt);
     updateMatchUi(t);
     if (terrDirty){ terrTexture.needsUpdate = true; terrDirty = false; }
     if (glowDirty){ glowTexture.needsUpdate = true; glowDirty = false; }
