@@ -614,30 +614,37 @@
 //  に見えるので、ゲームのコードはほぼそのままです。
 //
 //  部屋: 招待リンク（?room=… 付きのURL）を開いた人同士が同じ部屋に入ります。
-//  GitHub Pagesだけで動作し、window.claude には依存しません。
 // =====================================================================
 window.createP2PRoom = async function(){
-  const APP_ID = 'emishi34-line-runner-3d-v10';   // バージョンを分けたいときはここを変える
+  const APP_ID = 'emishi34-line-runner-3d-v11';
   const roomName = window.LR3D_ROOM || 'main';
 
-  // 読み込み先を順番に試す（どこか1つでも読めればOK）
+  // Trystero は現在のAPIを優先し、予備CDNも順番に試す。
   const SOURCES = [
-    'https://cdn.jsdelivr.net/npm/trystero@0.21.8/+esm',
-    'https://esm.sh/trystero@0.21.8',
-    'https://esm.run/trystero@0.21.8',
-    'https://cdn.jsdelivr.net/npm/trystero@0.21.8/torrent/+esm',
-    'https://esm.sh/trystero@0.21.8/torrent'
+    'https://cdn.jsdelivr.net/npm/trystero@0.25.0/+esm',
+    'https://esm.sh/trystero@0.25.0',
+    'https://esm.run/trystero@0.25.0'
   ];
   const errors = [];
-  const withTimeout = (pr, ms) => Promise.race([pr, new Promise((_, rej) => setTimeout(() => rej(new Error('時間切れ')), ms))]);
+  const withTimeout = (pr, ms) => Promise.race([
+    pr,
+    new Promise((_, rej) => setTimeout(() => rej(new Error('時間切れ')), ms))
+  ]);
+
   let tr = null, selfId = null;
   for (const src of SOURCES){
     try {
-      const mod = await withTimeout(import(src), 12000);
+      const mod = await withTimeout(import(src), 15000);
       if (typeof mod.joinRoom !== 'function') throw new Error('joinRoom が見つからない');
-      tr = mod.joinRoom({ appId: APP_ID }, roomName);
+      tr = mod.joinRoom({ appId: APP_ID }, roomName, {
+        onJoinError(details){
+          const e = details && details.error ? details.error : details;
+          window.LR3D_NET_ERROR = 'P2P接続失敗: ' + ((e && e.message) || e || '不明');
+          console.error('[LR3D] Trystero join error:', details);
+        }
+      });
       selfId = mod.selfId || ('me-' + Math.random().toString(36).slice(2));
-      console.log('[LR3D] 通信ライブラリ読み込み成功:', src);
+      console.log('[LR3D] 通信ライブラリ読み込み成功:', src, 'room=', roomName, 'self=', selfId);
       break;
     } catch (e){
       const m = (e && e.message) ? e.message : String(e);
@@ -650,17 +657,19 @@ window.createP2PRoom = async function(){
     return null;
   }
 
-  // 新旧どちらの makeAction の形にも対応
-  const act = tr.makeAction('pr');
+  // 0.25系の makeAction API と旧APIの両方に対応。
+  const act = tr.makeAction('lr3d_presence_v2');
   let sendRaw, onRaw;
-  if (Array.isArray(act)){ sendRaw = act[0]; onRaw = act[1]; }
-  else {
+  if (Array.isArray(act)){
+    sendRaw = act[0];
+    onRaw = act[1];
+  } else {
     sendRaw = (data, target) => act.send(data, target ? { target } : undefined);
     onRaw = (cb) => { act.onMessage = (data, info) => cb(data, info && info.peerId); };
   }
 
   let myPresence = {};
-  const others = new Map();   // peerId -> presence
+  const others = new Map();
   const peersCbs = [];
   let lastPeers = [];
 
@@ -671,37 +680,62 @@ window.createP2PRoom = async function(){
     for (const cb of peersCbs){ try { cb({ peers: list }); } catch (e){ console.error(e); } }
   }
 
-  // f=1 は全体の置き換え、それ以外は差分のマージ
-  onRaw((msg, peerId) => {
+  function acceptPresence(msg, peerId){
     if (!msg || typeof msg !== 'object' || !peerId) return;
     const cur = others.get(peerId) || {};
     const p = (msg.p && typeof msg.p === 'object') ? msg.p : {};
-    // 毎回新しいオブジェクトにする（ゲーム側が「変わったか」を同一性で見ているため）
     others.set(peerId, msg.f ? Object.assign({}, p) : Object.assign({}, cur, p));
     emit();
-  });
+  }
+  onRaw(acceptPresence);
 
-  tr.onPeerJoin((peerId) => {
+  // 現行Trysteroは onPeerJoin / onPeerLeave が「プロパティ」です。
+  // 古い版の「関数呼び出し形式」にも対応しておく。
+  const handleJoin = (peerId) => {
+    if (!peerId || peerId === selfId) return;
     if (!others.has(peerId)) others.set(peerId, {});
-    try { sendRaw({ f: 1, p: myPresence }, peerId); } catch (e){}
     emit();
-  });
-  tr.onPeerLeave((peerId) => {
+    try { sendRaw({ f: 1, p: myPresence }, peerId); } catch (e){ console.warn('[LR3D] 初期presence送信失敗', e); }
+  };
+  const handleLeave = (peerId) => {
+    if (!peerId) return;
     others.delete(peerId);
     emit();
-  });
+  };
 
-  // 念のため、席の情報だけは数秒おきに送り直す（大きな盤面データは送らない）
-  setInterval(() => {
+  try {
+    tr.onPeerJoin = handleJoin;
+    tr.onPeerLeave = handleLeave;
+  } catch (e){
+    // 旧APIへの最後の互換処理
+    try { tr.onPeerJoin(handleJoin); } catch (_) {}
+    try { tr.onPeerLeave(handleLeave); } catch (_) {}
+  }
+
+  // すでに接続済みの相手がいる場合も拾う。
+  try {
+    if (typeof tr.getPeers === 'function'){
+      const ps = tr.getPeers();
+      for (const peerId of Object.keys(ps || {})) handleJoin(peerId);
+    }
+  } catch (e){}
+
+  // 席情報を定期的に再送。大きなスナップショットは再送しない。
+  const presenceTimer = setInterval(() => {
     if (!others.size) return;
     const light = {};
-    for (const k in myPresence){ if (k !== 's' && k !== 'cq') light[k] = myPresence[k]; }
+    for (const k in myPresence){
+      if (k !== 's' && k !== 'cq') light[k] = myPresence[k];
+    }
     try { sendRaw({ p: light }); } catch (e){}
-  }, 4000);
+  }, 2000);
 
-  const leave = () => { try { tr.leave(); } catch (e){} };
-  window.addEventListener('pagehide', leave);
-  window.addEventListener('beforeunload', leave);
+  const leave = () => {
+    clearInterval(presenceTimer);
+    try { tr.leave(); } catch (e){}
+  };
+  window.addEventListener('pagehide', leave, { once: true });
+  window.addEventListener('beforeunload', leave, { once: true });
 
   return {
     presence(patch){
@@ -710,7 +744,10 @@ window.createP2PRoom = async function(){
       emit();
       return Promise.resolve();
     },
-    onPeers(cb){ peersCbs.push(cb); cb({ peers: lastPeers.length ? lastPeers : [{ peer: selfId, kind: 'viewer', presence: myPresence, isMe: true, sameTab: true }] }); },
+    onPeers(cb){
+      peersCbs.push(cb);
+      cb({ peers: lastPeers.length ? lastPeers : [{ peer: selfId, kind: 'viewer', presence: myPresence, isMe: true, sameTab: true }] });
+    },
     onConnection(cb){ setTimeout(() => { try { cb(true); } catch (e){ console.error(e); } }, 300); },
     connected(){ return true; },
     roomName
@@ -8920,10 +8957,7 @@ window.createP2PRoom = async function(){
     let room = null;
     try {
       if (typeof window.createP2PRoom === 'function') room = await window.createP2PRoom();
-    } catch (e){
-      room = null;
-      window.LR3D_NET_ERROR = window.LR3D_NET_ERROR || ('部屋の準備で失敗: ' + ((e && e.message) || e));
-    }
+    } catch (e){ room = null; window.LR3D_NET_ERROR = window.LR3D_NET_ERROR || ('部屋の準備で失敗: ' + ((e && e.message) || e)); }
     if (!room){ goOffline(); return; }
     NET.room = room;
     let autoTried = false;
@@ -8931,6 +8965,7 @@ window.createP2PRoom = async function(){
       renderLobby();
       if (c && !autoTried && NET.autoSeat){
         autoTried = true;
+        // Give everyone already here a moment to show up before reclaiming.
         setTimeout(() => { if (!NET.seat && NET.autoSeat) claimSeat(NET.autoSeat); }, 1500);
       }
     }, () => goOffline());
