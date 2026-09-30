@@ -89,9 +89,6 @@
     gap: 10px;
     z-index: 10;
   }
-  #bottomPanels.collapsed #settingsPanel,
-  #bottomPanels.collapsed #spawnInfoPanel { display: none !important; }
-  #panelCollapseBtn { margin-left: 6px; }
   #settingsPanel {
     width: min(92vw, 380px);
     max-height: 46vh;
@@ -199,6 +196,22 @@
 
   .hidden { display: none !important; }
 
+  #armedCardBadge {
+    position: fixed;
+    top: max(70px, calc(env(safe-area-inset-top) + 70px));
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(191,239,255,0.16);
+    border: 1px solid rgba(191,239,255,0.6);
+    color: #eafcff;
+    font-size: 13px;
+    padding: 7px 16px;
+    border-radius: 999px;
+    z-index: 12;
+    pointer-events: none;
+    white-space: nowrap;
+  }
+
   #panelTabs {
     display: flex;
     gap: 6px;
@@ -218,6 +231,11 @@
     border-color: transparent;
   }
 
+  #abilityPanel {
+    display: flex;
+    gap: 10px;
+    touch-action: auto;
+  }
   #spawnInfoPanel {
     width: min(92vw, 380px);
     max-height: 46vh;
@@ -252,6 +270,47 @@
     color: rgba(255,255,255,0.8);
   }
   .spawnInfoRow span:last-child { font-variant-numeric: tabular-nums; color: #fff; }
+  .cardCooldown {
+    font-size: 11px;
+    color: #ffd166;
+    font-variant-numeric: tabular-nums;
+    min-height: 1.1em;
+  }
+  .abilityCard.onCooldown { opacity: 0.45; }
+  .abilityCard.onCooldown .cardName { color: rgba(255,255,255,0.6); }
+  .abilityCard {
+    width: 74px;
+    height: 104px;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 6px;
+    background: rgba(22,22,28,0.85);
+    border: 2px solid rgba(255,255,255,0.2);
+    color: #fff;
+    touch-action: none;
+    user-select: none;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+  }
+  .abilityCard.skillCard { border-color: #5ac8ff; }
+  .abilityCard.strongCard { border-color: #ffcc4d; box-shadow: 0 4px 18px rgba(255,204,77,0.25); }
+  .abilityCard .cardType {
+    font-size: 9.5px;
+    letter-spacing: 0.05em;
+    opacity: 0.75;
+  }
+  .abilityCard.skillCard .cardType { color: #7fd6ff; }
+  .abilityCard.strongCard .cardType { color: #ffdc7f; }
+  .abilityCard .cardName {
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+    line-height: 1.3;
+  }
+
   #radialMenu {
     position: fixed;
     left: 0; top: 0;
@@ -364,9 +423,6 @@
     color: #fff;
   }
   #lobbyCard h1 { margin: 0 0 4px; font-size: 21px; letter-spacing: 0.02em; }
-  #inviteRow { display: flex; gap: 8px; margin: 12px 0 4px; }
-  #inviteUrl { flex: 1; min-width: 0; font-size: 12px; padding: 8px 10px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.18); background: rgba(0,0,0,0.35); color: #fff; }
-  #copyInviteBtn { flex: none; width: auto; margin: 0; padding: 8px 14px; }
   #lobbyStatus { font-size: 12.5px; color: rgba(255,255,255,0.6); margin-bottom: 14px; line-height: 1.55; }
   .seatRow {
     display: flex; align-items: center; gap: 10px;
@@ -443,18 +499,35 @@
       <button class="lobbyBtn" id="seat2Btn">参加する</button>
     </div>
     <button class="lobbyBtn" id="startBtn" disabled>試合開始</button>
-    <div id="inviteRow"><input id="inviteUrl" readonly aria-label="招待リンク"><button class="lobbyBtn" id="copyInviteBtn">コピー</button></div>
-    <div id="lobbyNote">1試合6分。終了時に陣地の面積が広い陣営の勝ちです。<br>上の招待リンクを相手に送り、開いてもらって空いている席に参加してもらってください(ログイン不要)。試合はプレイヤー1の端末で進行するので、プレイヤー1は試合中この画面を開いたままにしてください。</div>
+    <div id="lobbyNote">1試合6分。終了時に陣地の面積が広い陣営の勝ちです。<br>相手にもこのページを開いてもらい、空いている席に参加してもらってください。試合はプレイヤー1の端末で進行するので、プレイヤー1は試合中この画面を開いたままにしてください。</div>
   </div>
 </div>
+<div id="armedCardBadge" class="hidden"></div>
 <div id="bottomPanels">
   <div id="panelTabs">
     <button id="tabSliders" class="panelTabBtn active">設定</button>
+    <button id="tabAbilities" class="panelTabBtn">アビリティ</button>
     <button id="tabSpawnInfo" class="panelTabBtn">湧き率</button>
-    <button id="panelCollapseBtn" class="panelTabBtn" aria-label="パネルをしまう">▼ しまう</button>
   </div>
   <div id="settingsPanel">
     <div id="settingsScroll"></div>
+  </div>
+  <div id="abilityPanel" class="hidden">
+    <div class="abilityCard strongCard" id="card_giant_meteor">
+      <div class="cardType">強スキル</div>
+      <div class="cardName">巨大隕石</div>
+      <div class="cardCooldown" id="cooldown_giant_meteor"></div>
+    </div>
+    <div class="abilityCard strongCard" id="card_light_pillar">
+      <div class="cardType">強スキル</div>
+      <div class="cardName">光の柱</div>
+      <div class="cardCooldown" id="cooldown_light_pillar"></div>
+    </div>
+    <div class="abilityCard strongCard" id="card_poison_rain">
+      <div class="cardType">強スキル</div>
+      <div class="cardName">毒の雨</div>
+      <div class="cardCooldown" id="cooldown_poison_rain"></div>
+    </div>
   </div>
   <div id="spawnInfoPanel" class="hidden">
     <div id="spawnInfoScroll"></div>
@@ -463,229 +536,107 @@
 <div id="radialMenu"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script>
-// ===== PeerJS room: anyone who opens the same link joins the same room =====
-// One tab in the room acts as a relay ("hub", PeerJS id lr3d-<room>); every
-// other tab connects to it. The hub forwards each tab's presence object to
-// everyone. If the hub tab leaves, the remaining tabs elect a new one.
-// Exposes the same small API the game used before: presence(), onPeers(),
-// onConnection(), connected().
-window.createPeerRoom = function(roomCode){
-  const HUB_ID = 'lr3d-v1-' + roomCode;
-  const PEER_OPTS = { debug: 0, config: { iceServers: [
-    { urls: 'stun:stun.l.google.com:19302' },
-    { urls: 'stun:stun1.l.google.com:19302' }
-  ] } };
-  let peer = null, isHub = false, myId = null;
-  let hubConn = null;                 // client side: connection to the hub
-  const clients = new Map();          // hub side: id -> {conn, last}
-  let others = {};                    // id -> presence (everyone but me)
-  let myPresence = Object.freeze({});
-  let isConnected = false, destroyed = false;
-  let lastHubMsg = 0;
-  const peerHandlers = [], connHandlers = [];
-  let fatal = null;
+// =====================================================================
+//  GitHub Pages 用の通信部分
+// ---------------------------------------------------------------------
+//  Claude のアーティファクトでは window.claude.use('room') が「部屋」を
+//  用意してくれていましたが、GitHub Pages にはそれがありません。
+//  代わりに Trystero（サーバー不要の WebRTC P2P ライブラリ）で同じ形の
+//  部屋を作ります。ゲーム本体からは今までと同じ
+//    room.presence(一部の値)  / room.onPeers(cb) / room.onConnection(cb)
+//  に見えるので、ゲームのコードはほぼそのままです。
+//
+//  部屋: 同じURLを開いた人は全員同じ部屋に入ります。
+//  別の部屋で遊びたいときは URL の後ろに ?room=好きな名前 を付けます。
+//    例) https://emishi34.github.io/territory-game-on-a-sphere/?room=abc
+// =====================================================================
+window.createP2PRoom = async function(){
+  const APP_ID = 'emishi34-line-runner-3d-v10';   // バージョンを分けたいときはここを変える
+  const roomName = (new URLSearchParams(location.search).get('room') || 'main').slice(0, 64);
 
-  function setConnected(v){
-    if (v === isConnected) return;
-    isConnected = v;
-    for (const h of connHandlers) try { h.fn(v); } catch (e){}
+  let mod;
+  try {
+    mod = await import('https://esm.run/trystero@0.21.8');
+  } catch (e){
+    console.warn('Trystero を読み込めませんでした', e);
+    return null;
   }
-  let peersScheduled = false;
-  function emitPeers(){
-    if (peersScheduled) return;
-    peersScheduled = true;
-    setTimeout(() => {
-      peersScheduled = false;
-      const list = [];
-      if (myId) list.push({ peer: myId, presence: myPresence, kind: 'viewer', isMe: true, sameTab: true, guest: false, by: null });
-      for (const id in others) list.push({ peer: id, presence: others[id], kind: 'viewer', isMe: false, sameTab: false, guest: false, by: null });
-      const change = { peers: list };
-      for (const h of peerHandlers) try { h.fn(change); } catch (e){}
-    }, 0);
-  }
-  function safeSend(conn, msg){ try { if (conn && conn.open) conn.send(msg); } catch (e){} }
-  function hubBroadcast(msg, exceptId){
-    for (const [id, c] of clients) if (id !== exceptId) safeSend(c.conn, msg);
+  const { joinRoom, selfId } = mod;
+  let tr;
+  try {
+    tr = joinRoom({ appId: APP_ID }, roomName);
+  } catch (e){
+    console.warn('部屋に入れませんでした', e);
+    return null;
   }
 
-  // ---- sending my presence (coalesced, ~30/s max) ----
-  let sendTimer = null, lastSendAt = 0;
-  function scheduleSend(){
-    if (sendTimer) return;
-    const wait = Math.max(0, 33 - (performance.now() - lastSendAt));
-    sendTimer = setTimeout(() => { sendTimer = null; lastSendAt = performance.now(); sendMine(); }, wait);
-  }
-  function sendMine(){
-    if (!myId) return;
-    if (isHub) hubBroadcast({ t: 'u', id: myId, p: myPresence });
-    else safeSend(hubConn, { t: 'p', p: myPresence });
+  // 新旧どちらの makeAction の形にも対応
+  const act = tr.makeAction('pr');
+  let sendRaw, onRaw;
+  if (Array.isArray(act)){ sendRaw = act[0]; onRaw = act[1]; }
+  else {
+    sendRaw = (data, target) => act.send(data, target ? { target } : undefined);
+    onRaw = (cb) => { act.onMessage = (data, info) => cb(data, info && info.peerId); };
   }
 
-  // ---- becoming the hub / joining the hub ----
-  function cleanupPeer(){
-    try { if (hubConn) hubConn.close(); } catch (e){}
-    hubConn = null;
-    for (const c of clients.values()) try { c.conn.close(); } catch (e){}
-    clients.clear();
-    try { if (peer) peer.destroy(); } catch (e){}
-    peer = null; isHub = false; myId = null;
+  let myPresence = {};
+  const others = new Map();   // peerId -> presence
+  const peersCbs = [];
+  let lastPeers = [];
+
+  function emit(){
+    const list = [{ peer: selfId, kind: 'viewer', presence: myPresence, isMe: true, sameTab: true }];
+    for (const [id, pr] of others) list.push({ peer: id, kind: 'viewer', presence: pr, isMe: false, sameTab: false });
+    lastPeers = list;
+    for (const cb of peersCbs){ try { cb({ peers: list }); } catch (e){ console.error(e); } }
   }
-  let attempt = 0, retryTimer = null;
-  function retry(delay){
-    if (destroyed) return;
-    clearTimeout(retryTimer);
-    setConnected(false);
-    retryTimer = setTimeout(tryBecomeHub, delay);
-  }
-  function tryBecomeHub(){
-    if (destroyed) return;
-    cleanupPeer();
-    others = {};
-    attempt++;
-    let p;
-    try { p = new Peer(HUB_ID, PEER_OPTS); } catch (e){ fail('Peer: ' + e.message); return; }
-    peer = p;
-    p.on('open', (id) => {
-      if (peer !== p) return;
-      isHub = true; myId = id; attempt = 0;
-      setConnected(true);
-      emitPeers();
-    });
-    p.on('connection', (conn) => {
-      if (peer !== p || !isHub) return;
-      conn.on('open', () => {
-        clients.set(conn.peer, { conn, last: performance.now() });
-        const all = {};
-        for (const id in others) all[id] = others[id];
-        all[myId] = myPresence;
-        safeSend(conn, { t: 'full', peers: all });
-      });
-      conn.on('data', (m) => {
-        const c = clients.get(conn.peer);
-        if (c) c.last = performance.now();
-        if (!m || typeof m !== 'object') return;
-        if (m.t === 'p' && m.p && typeof m.p === 'object'){
-          others[conn.peer] = Object.freeze(m.p);
-          hubBroadcast({ t: 'u', id: conn.peer, p: m.p }, conn.peer);
-          emitPeers();
-        }
-      });
-      const gone = () => dropClient(conn.peer, conn);
-      conn.on('close', gone);
-      conn.on('error', gone);
-    });
-    p.on('disconnected', () => { if (peer === p && !p.destroyed) try { p.reconnect(); } catch (e){} });
-    p.on('error', (err) => {
-      if (peer !== p) return;
-      if (err && err.type === 'unavailable-id'){ joinAsClient(); return; }
-      if (isHub && err && (err.type === 'network' || err.type === 'server-error' || err.type === 'socket-error' || err.type === 'socket-closed')) return; // keep relaying existing players
-      if (err && err.type === 'browser-incompatible'){ fail('このブラウザはWebRTCに対応していません'); return; }
-      retry(Math.min(8000, 800 * attempt));
-    });
-  }
-  function dropClient(id, conn){
-    const c = clients.get(id);
-    if (!c || (conn && c.conn !== conn)) return;
-    clients.delete(id);
-    delete others[id];
-    hubBroadcast({ t: 'l', id });
-    emitPeers();
-  }
-  function joinAsClient(){
-    if (destroyed) return;
-    cleanupPeer();
-    let p;
-    try { p = new Peer(PEER_OPTS); } catch (e){ fail('Peer: ' + e.message); return; }
-    peer = p;
-    p.on('open', (id) => {
-      if (peer !== p) return;
-      myId = id;
-      const conn = p.connect(HUB_ID, { reliable: true, serialization: 'json' });
-      hubConn = conn;
-      const openTimer = setTimeout(() => { if (hubConn === conn && !conn.open) retry(300 + Math.random() * 700); }, 12000);
-      conn.on('open', () => {
-        clearTimeout(openTimer);
-        lastHubMsg = performance.now();
-        attempt = 0;
-        safeSend(conn, { t: 'p', p: myPresence });
-      });
-      conn.on('data', (m) => {
-        if (hubConn !== conn) return;
-        lastHubMsg = performance.now();
-        if (!m || typeof m !== 'object') return;
-        if (m.t === 'full' && m.peers){
-          others = {};
-          for (const id in m.peers) if (id !== myId) others[id] = Object.freeze(m.peers[id] || {});
-          setConnected(true);
-          emitPeers();
-        } else if (m.t === 'u' && m.id && m.id !== myId){
-          others[m.id] = Object.freeze(m.p || {});
-          emitPeers();
-        } else if (m.t === 'l' && m.id){
-          delete others[m.id];
-          emitPeers();
-        }
-      });
-      const lost = () => { if (hubConn === conn){ hubConn = null; retry(200 + Math.random() * 900); } };
-      conn.on('close', lost);
-      conn.on('error', lost);
-    });
-    p.on('disconnected', () => { if (peer === p && !p.destroyed) try { p.reconnect(); } catch (e){} });
-    p.on('error', (err) => {
-      if (peer !== p) return;
-      // The hub id vanished (hub left): try to take over.
-      if (err && err.type === 'peer-unavailable'){ retry(100 + Math.random() * 600); return; }
-      if (err && err.type === 'browser-incompatible'){ fail('このブラウザはWebRTCに対応していません'); return; }
-      if (hubConn && hubConn.open && err && (err.type === 'network' || err.type === 'server-error' || err.type === 'socket-error' || err.type === 'socket-closed')) return;
-      attempt++;
-      retry(Math.min(8000, 800 * attempt));
-    });
-  }
-  // Keepalive + dead-connection detection.
+
+  // f=1 は全体の置き換え、それ以外は差分のマージ
+  onRaw((msg, peerId) => {
+    if (!msg || typeof msg !== 'object' || !peerId) return;
+    const cur = others.get(peerId) || {};
+    const p = (msg.p && typeof msg.p === 'object') ? msg.p : {};
+    // 毎回新しいオブジェクトにする（ゲーム側が「変わったか」を同一性で見ているため）
+    others.set(peerId, msg.f ? Object.assign({}, p) : Object.assign({}, cur, p));
+    emit();
+  });
+
+  tr.onPeerJoin((peerId) => {
+    if (!others.has(peerId)) others.set(peerId, {});
+    try { sendRaw({ f: 1, p: myPresence }, peerId); } catch (e){}
+    emit();
+  });
+  tr.onPeerLeave((peerId) => {
+    others.delete(peerId);
+    emit();
+  });
+
+  // 念のため、席の情報だけは数秒おきに送り直す（大きな盤面データは送らない）
   setInterval(() => {
-    if (destroyed || !myId) return;
-    const now = performance.now();
-    if (isHub){
-      hubBroadcast({ t: 'k' });
-      for (const [id, c] of clients) if (now - c.last > 9000) { try { c.conn.close(); } catch (e){} dropClient(id); }
-    } else if (hubConn && hubConn.open){
-      safeSend(hubConn, { t: 'p', p: myPresence });
-      if (now - lastHubMsg > 9000){ hubConn = null; retry(100 + Math.random() * 600); }
-    }
-  }, 2500);
-  function fail(msg){
-    if (fatal) return;
-    fatal = { code: 'peer', message: msg };
-    destroyed = true;
-    cleanupPeer();
-    for (const h of peerHandlers) if (h.err) try { h.err(fatal); } catch (e){}
-    for (const h of connHandlers) if (h.err) try { h.err(fatal); } catch (e){}
-  }
-  window.addEventListener('pagehide', () => { destroyed = true; cleanupPeer(); });
+    if (!others.size) return;
+    const light = {};
+    for (const k in myPresence){ if (k !== 's' && k !== 'cq') light[k] = myPresence[k]; }
+    try { sendRaw({ p: light }); } catch (e){}
+  }, 4000);
 
-  if (typeof Peer !== 'function'){
-    setTimeout(() => fail('通信ライブラリ(PeerJS)を読み込めませんでした'), 0);
-  } else {
-    tryBecomeHub();
-  }
+  const leave = () => { try { tr.leave(); } catch (e){} };
+  window.addEventListener('pagehide', leave);
+  window.addEventListener('beforeunload', leave);
 
   return {
     presence(patch){
-      const next = Object.assign({}, myPresence);
-      for (const k in patch){ if (patch[k] === null) delete next[k]; else next[k] = patch[k]; }
-      myPresence = Object.freeze(next);
-      emitPeers();
-      scheduleSend();
+      myPresence = Object.assign({}, myPresence, patch || {});
+      try { sendRaw({ p: patch || {} }); } catch (e){}
+      emit();
       return Promise.resolve();
     },
-    onPeers(fn, err){ const h = { fn, err }; peerHandlers.push(h); if (fatal && err) setTimeout(() => err(fatal), 0); else emitPeers(); return () => { const i = peerHandlers.indexOf(h); if (i >= 0) peerHandlers.splice(i, 1); }; },
-    onConnection(fn, err){ const h = { fn, err }; connHandlers.push(h); setTimeout(() => { if (fatal){ if (err) err(fatal); } else fn(isConnected); }, 0); return () => { const i = connHandlers.indexOf(h); if (i >= 0) connHandlers.splice(i, 1); }; },
-    connected(){ return isConnected; }
+    onPeers(cb){ peersCbs.push(cb); cb({ peers: lastPeers.length ? lastPeers : [{ peer: selfId, kind: 'viewer', presence: myPresence, isMe: true, sameTab: true }] }); },
+    onConnection(cb){ setTimeout(() => { try { cb(true); } catch (e){ console.error(e); } }, 300); },
+    connected(){ return true; },
+    roomName
   };
 };
-
 </script>
 <script>
 (function(){
@@ -1045,7 +996,7 @@ window.createPeerRoom = function(roomCode){
   // the sphere; a matching canvas texture is painted to visualize it.
   const GRID_W = 180, GRID_H = 90;
   const EMPTY = 0, PINK = 1, CYAN = 2, DARK_PINK = 3, METEOR_CRATER = 4, CRYSTAL_ZONE = 5, DARK_CYAN = 6, MOON_CRATER = 7;
-  const POISON_POOL = 10, TOXIC_POOL = 11; // (8 / 9 are unused)
+  const POISON_POOL = 10, TOXIC_POOL = 11; // (8 / 9 are taken on the wire by farm cells)
   // Level 3 ground (made by B enclosing dark ground): red for pink, deep blue for cyan.
   const RED_PINK = 12, DEEP_BLUE = 13;
   const RED_OF = [RED_PINK, DEEP_BLUE];
@@ -1144,9 +1095,9 @@ window.createPeerRoom = function(roomCode){
   }
 
   const PINK_COLOR = 'rgba(253,149,114,0.95)';      // level 1: DIC53
-  const DARK_PINK_COLOR = 'rgba(252,107,61,0.95)';   // level 2: DIC160
+  const DARK_PINK_COLOR = 'rgba(252,107,61,0.95)';   // level 2 / farm: DIC160
   const CYAN_COLOR = 'rgba(26,193,221,0.95)';       // level 1: カリビアンブルー
-  const DARK_CYAN_COLOR = 'rgba(0,126,255,0.95)';    // level 2: アズール
+  const DARK_CYAN_COLOR = 'rgba(0,126,255,0.95)';    // level 2 / farm: アズール
   const METEOR_CRATER_COLOR = 'rgba(80,15,15,0.95)';  // reddish-black, left by a fallen giant meteor
   const CRYSTAL_ZONE_COLOR = 'rgba(35,205,130,0.85)'; // emerald, left by a spirit crystal
   const MOON_CRATER_COLOR = 'rgba(62,64,70,0.94)'; // dark gray, left by a small meteor from the moon
@@ -1161,6 +1112,14 @@ window.createPeerRoom = function(roomCode){
   // landmark itself naturally expires (see updateLandmarks), which clears
   // this membership before painting them back to EMPTY.
   const landmarkCellSet = new Set();
+  // Role A's "farm" attribute: dark pink cells that A itself upgraded.
+  // A cell only counts as farmland while it's still dark pink — the moment
+  // it's repainted anything else (eroded, cleared, etc.) it loses the
+  // attribute for good (see paintCell).
+  const farmCells = new Set();
+  let farmDirty = false;
+  function isFarmCell(idx){ return farmCells.has(idx) && (territoryGrid[idx] === DARK_PINK || territoryGrid[idx] === DARK_CYAN); }
+  function farmTeam(idx){ return isFarmCell(idx) ? teamOfCell(territoryGrid[idx]) : -1; }
   function colorCssFor(colorId){
     return colorId === PINK ? PINK_COLOR
       : colorId === DARK_PINK ? DARK_PINK_COLOR
@@ -1206,6 +1165,11 @@ window.createPeerRoom = function(roomCode){
     // Red / deep-blue ground never drops back to a lower level of its own team.
     if ((colorId === PINK || colorId === DARK_PINK) && territoryGrid[idx] === RED_PINK) return;
     if ((colorId === CYAN || colorId === DARK_CYAN) && territoryGrid[idx] === DEEP_BLUE) return;
+    if (farmCells.has(idx)){
+      const ft = teamOfCell(territoryGrid[idx]);
+      if (ft !== -1 && (colorId === EMPTY || teamOfCell(colorId) === 1 - ft)) noteFarmRaid(idx, ft); // enemy took farm ground
+    }
+    if (farmCells.delete(idx)) farmDirty = true;
     territoryGrid[idx] = colorId;
     markRowDirty(idx);
     const cw = TERR_CANVAS_W / GRID_W, ch = TERR_CANVAS_H / GRID_H;
@@ -1464,6 +1428,7 @@ window.createPeerRoom = function(roomCode){
     const team = ch ? ch.team : 0;
     const LIGHT = LIGHT_OF[team], DARK = DARK_OF[team];
     let sealed = false;
+    const newFarm = [];
     for (let i = 1; i < components.length; i++){
       for (const idx of components[i].cells){
         const gx = idx % GRID_W, gy = (idx / GRID_W) | 0;
@@ -1476,19 +1441,30 @@ window.createPeerRoom = function(roomCode){
         // becomes ordinary pink, and land that was already pink is
         // reinforced to dark pink. Dark pink is the top level.
         const prev = snapshot[idx];
-        // Levels: empty/enemy -> light (level 1) -> dark (level 2) -> red
-        // (level 3, the top). Roles A and B raise ground the same way.
+        // Levels: empty/enemy -> light -> dark -> red (red only by B, and
+        // never on farm ground; farm only comes from A over light ground).
         const RED = RED_OF[team];
         let upgraded;
         if (prev === RED) upgraded = RED;
-        else if (prev === DARK) upgraded = RED;
+        else if (prev === DARK) upgraded = (ch && ch.role === 'B' && !farmCells.has(idx)) ? RED : DARK;
         else if (prev === LIGHT) upgraded = DARK;
         else upgraded = LIGHT;
         paintCell(gx, gy, upgraded);
         if (snapshot !== territoryGrid) snapshot[idx] = upgraded;
         sealed = true;
+        // Farmland is A's alone, and only where A's own loop actually
+        // reinforced its light colour into the dark one.
+        if (ch && ch.role === 'A' && prev === LIGHT && upgraded === DARK
+            && territoryGrid[idx] === DARK && !farmCells.has(idx)){
+          farmCells.add(idx);
+          farmDirty = true;
+          markRowDirty(idx);
+          newFarm.push(idx);
+        }
       }
     }
+    // A new patch of farm: one scarecrow comes with it.
+    if (newFarm.length && isSimHost()) spawnScarecrow(team, newFarm);
     return sealed;
   }
   // Role C's trail never paints territory — instead, closing a loop with it
@@ -1835,6 +1811,7 @@ window.createPeerRoom = function(roomCode){
   const TEAM_DOT_NAMES = ['赤い点', '青い点'];
 
   function damageCharacter(ch, dmg){
+    if (ch.isBSeg){ damageBSeg(ch, dmg); return; }
     if (!ch.alive) return;
     spawnFloatingNumber(ch.dir, CHAR_LOCAL_R, dmg, '#ff3030'); // before hp drops to 0, so a killing blow still shows its number
     ch.hp = Math.max(0, ch.hp - dmg);
@@ -2092,6 +2069,8 @@ window.createPeerRoom = function(roomCode){
   let GRAY_MOB_MASS = 10;
 
   function mobAuraRange(mob){
+    if (mob.isFarmer) return FARMER_MOB_SENSE;
+    if (mob.isScarecrow) return SCARECROW_RANGE;
     if (mob.isPurple) return PURPLE_MOB_RANGE;
     if (mob.isGray) return GRAY_MOB_RANGE;
     if (mob.isBoss) return BOSS_BLUE_MOB_RANGE;
@@ -2101,6 +2080,8 @@ window.createPeerRoom = function(roomCode){
     return mob.isGold ? GOLD_MOB_RANGE : MOB_AURA_RANGE;
   }
   function mobSpeed(mob){
+    if (mob.isFarmer) return FARMER_MOB_SPEED;
+    if (mob.isScarecrow) return SCARECROW_SPEED;
     if (mob.isPurple) return PURPLE_MOB_SPEED;
     if (mob.isGray) return GRAY_MOB_SPEED;
     if (mob.isBoss) return BOSS_BLUE_MOB_SPEED;
@@ -2110,6 +2091,8 @@ window.createPeerRoom = function(roomCode){
     return mob.isGold ? GOLD_MOB_SPEED : MOB_ANGULAR_SPEED;
   }
   function mobAttackCooldown(mob){
+    if (mob.isFarmer) return FARMER_MOB_THROW_MS;
+    if (mob.isScarecrow) return SCARECROW_COOLDOWN_MS;
     if (mob.isPurple) return PURPLE_MOB_COOLDOWN_MS;
     if (mob.isGray) return GRAY_MOB_COOLDOWN_MS;
     if (mob.isBoss) return BOSS_BLUE_MOB_COOLDOWN_MS;
@@ -2119,7 +2102,8 @@ window.createPeerRoom = function(roomCode){
     return mob.isGold ? GOLD_MOB_COOLDOWN_MS : MOB_ATTACK_COOLDOWN_MS;
   }
   function mobDamageRoll(mob){
-    if (mob.isPurple) return 0; // never attack directly
+    if (mob.isPurple || mob.isFarmer) return 0; // never attack directly
+    if (mob.isScarecrow) return SCARECROW_DMG_MIN + Math.random() * (SCARECROW_DMG_MAX - SCARECROW_DMG_MIN);
     if (mob.isGray) return GRAY_MOB_ATTACK_DAMAGE; // fixed, never a range
     if (mob.isBoss) return BOSS_BLUE_MOB_DAMAGE_MIN + Math.random() * (BOSS_BLUE_MOB_DAMAGE_MAX - BOSS_BLUE_MOB_DAMAGE_MIN);
     if (mob.isAlliedBlack) return BLACK_MOB_DAMAGE_MIN + Math.random() * (BLACK_MOB_DAMAGE_MAX - BLACK_MOB_DAMAGE_MIN);
@@ -2202,7 +2186,11 @@ window.createPeerRoom = function(roomCode){
     let isBig = false, isGold = false;
     const roll = Math.random();
     const bigChance = isPink ? BIG_PINK_MOB_CHANCE : BIG_BLUE_MOB_CHANCE;
-    if (territoryGrid[idx] === RED_OF[t]){
+    if (isFarmCell(idx)){
+      // 畑陣地 has its own table: farmer 50% / gold (silver) 1% / normal 49%.
+      if (roll < FARM_FARMER_CHANCE){ spawnFarmerMob(t, cellIdxToDir(idx)); return; }
+      if (roll < FARM_FARMER_CHANCE + FARM_GOLD_CHANCE) isGold = true;
+    } else if (territoryGrid[idx] === RED_OF[t]){
       if (roll < RED_BIG_CHANCE) isBig = true;
       else if (roll < RED_BIG_CHANCE + RED_GOLD_CHANCE) isGold = true;
     } else if (territoryGrid[idx] === DARK_OF[t]){
@@ -2640,6 +2628,8 @@ window.createPeerRoom = function(roomCode){
       // ordinary blue-mob behaviour below while it's searching and hasn't
       // locked onto a crowd yet.
       if (mob.isPurple){ updatePurpleMob(mob, list, i, isPink, dt, now); continue; }
+      if (mob.isFarmer){ updateFarmerMob(mob, list, i, isPink, dt, now); continue; }
+      if (mob.isScarecrow){ updateScarecrowMob(mob, list, i, isPink, dt, now); continue; }
       if (mob.isGray && updateGrayMob(mob, dt, now)){
         mob.dir = pushFreeEntityOutOfObstacles(mob.dir, 0);
         mob.mesh.position.copy(mob.dir).multiplyScalar(R * 1.02);
@@ -2775,6 +2765,8 @@ window.createPeerRoom = function(roomCode){
   function mobVisualRadius(mob){
     if (mob.visualRadius !== undefined) return mob.visualRadius;
     if (mob.isPurple) return MOB_LOCAL_R * BIG_MOB_SIZE_MULT;
+    if (mob.isScarecrow) return MOB_LOCAL_R * SCARECROW_SIZE_MULT;
+    if (mob.isFarmer) return MOB_LOCAL_R;
     if (mob.isGray) return MOB_LOCAL_R * GRAY_MOB_SIZE_MULT;
     if (mob.isBoss) return MOB_LOCAL_R * BOSS_BLUE_MOB_SIZE_MULT;
     if (mob.isAlliedBlack) return MOB_LOCAL_R * 3;
@@ -2796,6 +2788,8 @@ window.createPeerRoom = function(roomCode){
   let GREEN_MOB_MASS = 1;
   let BOSS_BLUE_MOB_MASS = 10;
   function mobMass(mob){
+    if (mob.isFarmer) return FARMER_MOB_MASS;
+    if (mob.isScarecrow) return SCARECROW_MASS;
     if (mob.isPurple) return PURPLE_MOB_MASS;
     if (mob.isGray) return GRAY_MOB_MASS;
     if (mob.isBoss) return BOSS_BLUE_MOB_MASS;
@@ -3350,7 +3344,7 @@ window.createPeerRoom = function(roomCode){
       // owned by another still-active zone.
       if (landmarkCellSet.has(idx)) return;
       cells.push(idx);
-      prev.push(territoryGrid[idx]);
+      prev.push(territoryGrid[idx] | (farmCells.has(idx) ? 256 : 0));
       paintCell(idx % GRID_W, (idx / GRID_W) | 0, colorId);
     };
     // Paint first, *then* mark the cells protected — otherwise the
@@ -3396,7 +3390,8 @@ window.createPeerRoom = function(roomCode){
           if (lm.prev){
             const pv = lm.prev[k];
             paintCell(gx, gy, EMPTY);
-            if (pv !== EMPTY) paintCell(gx, gy, pv);
+            if ((pv & 255) !== EMPTY) paintCell(gx, gy, pv & 255);
+            if ((pv & 256) && territoryGrid[idx] === (pv & 255)){ farmCells.add(idx); farmDirty = true; }
           } else {
             paintCell(gx, gy, EMPTY);
           }
@@ -3507,6 +3502,35 @@ window.createPeerRoom = function(roomCode){
     }
   }
 
+  // ---- 毒の雨 (host) ----
+  const poisonRains = []; // { team, cells, endAt, nextDropAt }
+  function firePoisonRain(team, path){
+    if (teamCardUsed(team, 'poison_rain')) return;
+    if (!path || path.length < 2) return;
+    const pts = path.map(p => p.clone().normalize());
+    pts.push(pts[0].clone()); // close the loop
+    const cells = getAbilityEnclosedCells(densifyRoute(pts));
+    if (!cells || !cells.length) return;
+    cardUsed[team].poison_rain = true;
+    const now = performance.now();
+    poisonRains.push({ team, cells, endAt: now + POISON_RAIN_DURATION_MS, nextDropAt: now });
+  }
+  function updatePoisonRains(now){
+    for (let i = poisonRains.length - 1; i >= 0; i--){
+      const rain = poisonRains[i];
+      while (now >= rain.nextDropAt && rain.nextDropAt < rain.endAt){
+        const idx = rain.cells[Math.floor(Math.random() * rain.cells.length)];
+        const dir = cellIdxToDir(idx);
+        spawnPoisonDropVisual(dir, (d) => {
+          const r = POISON_POOL_RADIUS_MIN + Math.random() * Math.max(0, POISON_POOL_RADIUS_MAX - POISON_POOL_RADIUS_MIN);
+          spawnLandmark('poison_pool', d, r);
+        });
+        rain.nextDropAt += POISON_RAIN_INTERVAL_MIN_MS + Math.random() * Math.max(0, POISON_RAIN_INTERVAL_MAX_MS - POISON_RAIN_INTERVAL_MIN_MS);
+      }
+      if (rain.nextDropAt >= rain.endAt) poisonRains.splice(i, 1);
+    }
+  }
+
   // ---- 毒液 (the purple ball over a dot's head) ----
   const LIQUID_MESH_R = 0.05;
   function attachLiquidMesh(ch){
@@ -3575,6 +3599,7 @@ window.createPeerRoom = function(roomCode){
     }
   }
   function updatePoisonSystem(dt, now){
+    updatePoisonRains(now);
     updateMobPoison(pinkMobs, now);
     updateMobPoison(blueMobs, now);
     updateMobPoison(neutralMobs, now);
@@ -3745,7 +3770,7 @@ window.createPeerRoom = function(roomCode){
     if (list.length >= MAX_MOBS_PER_TEAM) return;
     if (kind === 'gray'){ spawnAlliedGrayMob(t); return; }
     const isBlack = kind === 'black';
-    const idx = randomCellOfColor(isBlack ? ((c) => c === DARK_OF[t] || c === RED_OF[t]) : (c => c === LIGHT_OF[t]));
+    const idx = randomCellOfColor(isBlack ? ((c, i) => (c === DARK_OF[t] && !farmCells.has(i)) || c === RED_OF[t]) : (c => c === LIGHT_OF[t])); // 畑陣地 isn't dark ground
     if (idx === null) return;
     const dir = cellIdxToDir(idx);
     const mesh = makeAlliedMobMesh(isBlack, t);
@@ -3916,7 +3941,7 @@ window.createPeerRoom = function(roomCode){
         if (cell === METEOR_CRATER){ ch.carryingFragment = 'meteor'; attachFragmentMesh(ch, 'meteor'); }
         else if (cell === CRYSTAL_ZONE){ ch.carryingFragment = 'crystal'; attachFragmentMesh(ch, 'crystal'); }
         else if (cell === MOON_CRATER){ ch.carryingFragment = 'moon'; attachFragmentMesh(ch, 'moon'); }
-      } else if (ch.carryingFragment === 'meteor' && (cell === DARK_OF[ch.team] || cell === RED_OF[ch.team])){
+      } else if (ch.carryingFragment === 'meteor' && ((cell === DARK_OF[ch.team] && !farmCells.has(idx)) || cell === RED_OF[ch.team])){
         deliverFragment(ch);
       } else if (ch.carryingFragment === 'crystal' && cell === LIGHT_OF[ch.team]){
         deliverFragment(ch);
@@ -4028,8 +4053,10 @@ window.createPeerRoom = function(roomCode){
   }
 
   // ================= per-character abilities =================
-  // A and B have no special ability any more: they only claim territory
-  // (up to level 3). C: werewolf (stronger and faster on the night side).
+  // A: farmer (plants/harvests watermelons on its own dark-pink "farm"
+  // ground, throws them to heal hurt allies), B: tunneler (digs a hole
+  // through to the far side of the globe after standing still), C:
+  // werewolf (stronger and faster on the night side).
   const ABILITY_UP = new THREE.Vector3(0, 1, 0);
   const ABILITY_Z = new THREE.Vector3(0, 0, 1);
   const _abilityTmp = new THREE.Vector3();
@@ -4042,6 +4069,753 @@ window.createPeerRoom = function(roomCode){
     ch.mesh.position.copy(dir).multiplyScalar(R * 1.02);
     ch.hpBar.position.copy(dir).multiplyScalar(R * 1.02 + CHAR_LOCAL_R + 0.1);
     ch.label.position.copy(dir).multiplyScalar(R * 1.02 + CHAR_LOCAL_R + 0.24);
+  }
+
+  // ---------- A: farm outline (thin green border around A's farm ground) ----------
+  const farmCanvas = document.createElement('canvas');
+  farmCanvas.width = TERR_CANVAS_W; farmCanvas.height = TERR_CANVAS_H;
+  const farmCtx = farmCanvas.getContext('2d');
+  const farmTexture = new THREE.CanvasTexture(farmCanvas);
+  farmTexture.generateMipmaps = false;
+  farmTexture.minFilter = THREE.LinearFilter;
+  farmTexture.magFilter = THREE.LinearFilter;
+  const farmOutlineMesh = new THREE.Mesh(
+    new THREE.SphereGeometry(R * 1.005, 64, 64),
+    new THREE.MeshBasicMaterial({ map: farmTexture, transparent: true, depthWrite: false })
+  );
+  farmOutlineMesh.renderOrder = 1;
+  sphereGroup.add(farmOutlineMesh);
+  let lastFarmRebuildAt = 0;
+  function rebuildFarmOutline(){
+    farmCtx.clearRect(0, 0, TERR_CANVAS_W, TERR_CANVAS_H);
+    const cw = TERR_CANVAS_W / GRID_W, chh = TERR_CANVAS_H / GRID_H;
+    farmCtx.strokeStyle = '#27d13a';
+    farmCtx.lineWidth = 2;
+    farmCtx.beginPath();
+    for (const idx of farmCells){
+      if (!isFarmCell(idx)) continue;
+      const gx = idx % GRID_W, gy = (idx / GRID_W) | 0;
+      const x0 = gx * cw, y0 = gy * chh, x1 = x0 + cw, y1 = y0 + chh;
+      const left = gy * GRID_W + (gx - 1 + GRID_W) % GRID_W;
+      const right = gy * GRID_W + (gx + 1) % GRID_W;
+      const up = gy > 0 ? idx - GRID_W : -1;
+      const down = gy < GRID_H - 1 ? idx + GRID_W : -1;
+      if (!isFarmCell(left)){ farmCtx.moveTo(x0, y0); farmCtx.lineTo(x0, y1); }
+      if (!isFarmCell(right)){ farmCtx.moveTo(x1, y0); farmCtx.lineTo(x1, y1); }
+      if (up < 0 || !isFarmCell(up)){ farmCtx.moveTo(x0, y0); farmCtx.lineTo(x1, y0); }
+      if (down < 0 || !isFarmCell(down)){ farmCtx.moveTo(x0, y1); farmCtx.lineTo(x1, y1); }
+    }
+    farmCtx.stroke();
+    farmTexture.needsUpdate = true;
+  }
+
+  // ---------- A: watermelon crops ----------
+  const watermelonTexture = (() => {
+    const c = document.createElement('canvas');
+    c.width = 64; c.height = 32;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = '#4fbf45';
+    ctx.fillRect(0, 0, 64, 32);
+    ctx.fillStyle = '#1c5a1e';
+    for (let s = 0; s < 8; s++){
+      for (let y = 0; y < 32; y++){
+        const x = s * 8 + 2 + Math.sin(y * 0.55 + s) * 1.6;
+        ctx.fillRect(x, y, 3, 1);
+      }
+    }
+    const tex = new THREE.CanvasTexture(c);
+    tex.wrapS = THREE.RepeatWrapping;
+    return tex;
+  })();
+  // Watermelons are rounded cubes (a square melon with soft corners).
+  function makeRoundedBoxGeometry(half, round, seg){
+    const g = new THREE.BoxGeometry(half * 2, half * 2, half * 2, seg, seg, seg);
+    const p = g.attributes.position;
+    const inner = half - round;
+    const v = new THREE.Vector3(), c = new THREE.Vector3();
+    for (let i = 0; i < p.count; i++){
+      v.fromBufferAttribute(p, i);
+      c.set(THREE.MathUtils.clamp(v.x, -inner, inner), THREE.MathUtils.clamp(v.y, -inner, inner), THREE.MathUtils.clamp(v.z, -inner, inner));
+      v.sub(c);
+      if (v.lengthSq() > 1e-12) v.normalize().multiplyScalar(round);
+      v.add(c);
+      p.setXYZ(i, v.x, v.y, v.z);
+    }
+    g.computeVertexNormals();
+    return g;
+  }
+  const watermelonGeo = makeRoundedBoxGeometry(0.8, 0.28, 6);
+  const watermelonMat = new THREE.MeshStandardMaterial({ map: watermelonTexture, roughness: 0.55, metalness: 0 });
+  // Rainbow watermelon: a rare (1%) crop that heals far more.
+  let RAINBOW_MELON_CHANCE = 0.01;
+  let RAINBOW_MELON_HEAL = 250;
+  let RAINBOW_MELON_MISSING = 100; // a rainbow melon goes to an ally down by at least this much HP
+  const rainbowTexture = (() => {
+    const c = document.createElement('canvas');
+    c.width = 64; c.height = 32;
+    const ctx = c.getContext('2d');
+    for (let x = 0; x < 64; x++){ ctx.fillStyle = 'hsl(' + Math.round(x / 64 * 360) + ',90%,58%)'; ctx.fillRect(x, 0, 1, 32); }
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    for (let s = 0; s < 8; s++){
+      for (let y = 0; y < 32; y++){
+        const x = s * 8 + 2 + Math.sin(y * 0.55 + s) * 1.6;
+        ctx.fillRect(x, y, 2, 1);
+      }
+    }
+    const tex = new THREE.CanvasTexture(c);
+    tex.wrapS = THREE.RepeatWrapping;
+    return tex;
+  })();
+  const rainbowMelonMat = new THREE.MeshStandardMaterial({ map: rainbowTexture, roughness: 0.4, metalness: 0.1, emissive: 0x222222 });
+  const crops = []; // { dir, cellIdx, mesh, progress, ripe }
+  const MAX_CROPS = 200;
+  function plantCrop(dir, cellIdx, team){
+    const mesh = new THREE.Mesh(watermelonGeo, watermelonMat);
+    mesh.quaternion.setFromUnitVectors(ABILITY_UP, dir);
+    sphereGroup.add(mesh);
+    const crop = { dir: dir.clone(), cellIdx, mesh, progress: 0, ripe: false, team: team || 0, rainbow: Math.random() < RAINBOW_MELON_CHANCE };
+    crops.push(crop);
+    layoutCrop(crop);
+  }
+  // Two stages only: a little sprout while it grows, then — the moment
+  // it's ripe — a full-size watermelon ready to harvest.
+  let sproutGeo = null, rainbowSproutGeo = null;
+  const sproutMat = new THREE.MeshStandardMaterial({ color: 0x4ccf3a, roughness: 0.6, metalness: 0 });
+  const rainbowSproutMat = new THREE.MeshStandardMaterial({ color: 0xffffff, vertexColors: true, roughness: 0.45, metalness: 0.05, emissive: 0x222222 });
+  function getRainbowSproutGeo(){
+    if (rainbowSproutGeo) return rainbowSproutGeo;
+    const g = getSproutGeo().clone();
+    const p = g.attributes.position;
+    const cols = new Float32Array(p.count * 3);
+    const c = new THREE.Color();
+    for (let i = 0; i < p.count; i++){
+      c.setHSL(((p.getX(i) + 0.55) / 1.1 + p.getY(i) * 0.6) % 1, 0.9, 0.58);
+      cols[i * 3] = c.r; cols[i * 3 + 1] = c.g; cols[i * 3 + 2] = c.b;
+    }
+    g.setAttribute('color', new THREE.BufferAttribute(cols, 3));
+    rainbowSproutGeo = g;
+    return g;
+  }
+  function getSproutGeo(){
+    if (sproutGeo) return sproutGeo;
+    const stem = new THREE.CylinderGeometry(0.05, 0.07, 0.55, 8); stem.translate(0, 0.275, 0);
+    const leafL = new THREE.SphereGeometry(1, 10, 8); leafL.scale(0.3, 0.06, 0.16); leafL.rotateZ(0.35); leafL.translate(-0.24, 0.55, 0);
+    const leafR = new THREE.SphereGeometry(1, 10, 8); leafR.scale(0.3, 0.06, 0.16); leafR.rotateZ(-0.35); leafR.translate(0.24, 0.55, 0);
+    sproutGeo = mergeGeometries([stem, leafL, leafR]);
+    return sproutGeo;
+  }
+  function applyCropLook(mesh, dir, ripe, rainbow){
+    const fullR = R * CROP_RADIUS * 0.85;
+    if (ripe){
+      const mat = rainbow ? rainbowMelonMat : watermelonMat;
+      if (mesh.geometry !== watermelonGeo || mesh.material !== mat){ mesh.geometry = watermelonGeo; mesh.material = mat; }
+      mesh.scale.setScalar(fullR);
+      mesh.position.copy(dir).multiplyScalar(R * 1.02 + fullR * 0.55);
+    } else {
+      const g = rainbow ? getRainbowSproutGeo() : getSproutGeo();
+      if (mesh.geometry !== g){ mesh.geometry = g; mesh.material = rainbow ? rainbowSproutMat : sproutMat; }
+      mesh.scale.setScalar(fullR * 0.9);
+      mesh.position.copy(dir).multiplyScalar(R * 1.02);
+    }
+  }
+  function layoutCrop(crop){
+    applyCropLook(crop.mesh, crop.dir, crop.ripe, crop.rainbow);
+  }
+  function removeCrop(i){
+    sphereGroup.remove(crops[i].mesh);
+    crops.splice(i, 1);
+  }
+  function updateCrops(dt){
+    for (let i = crops.length - 1; i >= 0; i--){
+      const crop = crops[i];
+      // The farm ground under it was lost (eroded, cleared...) — so is the crop.
+      if (farmTeam(crop.cellIdx) !== crop.team){ removeCrop(i); continue; }
+      if (!crop.ripe){
+        // Grows by a count: +1.2/sec by day, +0.8/sec by night (defaults),
+        // ripe at 20. crop.progress stays the 0..1 fraction of that.
+        const rate = isNightAtLocalDir(crop.dir) ? CROP_NIGHT_RATE : CROP_DAY_RATE;
+        crop.progress += (dt * rate) / Math.max(0.1, CROP_GROW_COUNT);
+        if (crop.progress >= 1){ crop.progress = 1; crop.ripe = true; layoutCrop(crop); }
+      }
+    }
+  }
+
+  // ---------- A: watermelon stock label ("スイカN個" above the HP bar) ----------
+  function makeStockLabelSprite(){
+    const c = document.createElement('canvas');
+    c.width = 192; c.height = 48;
+    const ctx = c.getContext('2d');
+    const tex = new THREE.CanvasTexture(c);
+    tex.generateMipmaps = false;
+    tex.minFilter = THREE.LinearFilter;
+    const spr = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, depthTest: false, depthWrite: false, transparent: true }));
+    spr.scale.set(0.5, 0.125, 1);
+    spr.renderOrder = 999;
+    spr._canvas = c; spr._ctx = ctx; spr._tex = tex; spr._shown = -1;
+    return spr;
+  }
+  function refreshStockLabel(ch){
+    const spr = ch.stockLabel;
+    const n = ch.watermelons || 0;
+    spr.visible = ch.alive && n > 0;
+    if (spr._shown === n) return;
+    spr._shown = n;
+    const c = spr._canvas, ctx = spr._ctx;
+    ctx.clearRect(0, 0, c.width, c.height);
+    ctx.font = 'bold 26px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.lineWidth = 5;
+    ctx.strokeStyle = 'rgba(0,0,0,0.75)';
+    ctx.strokeText('スイカ' + n + '個', c.width / 2, c.height / 2 + 1);
+    ctx.fillStyle = '#7dff72';
+    ctx.fillText('スイカ' + n + '個', c.width / 2, c.height / 2 + 1);
+    spr._tex.needsUpdate = true;
+  }
+
+  // ---------- A: throwing watermelons to heal hurt allies ----------
+  const watermelonThrows = []; // { mesh, from, target, t, duration }
+  function isHealTargetAlive(target){
+    return target.role ? target.alive : (pinkMobs.indexOf(target) !== -1 || blueMobs.indexOf(target) !== -1);
+  }
+  function pickHealTarget(farmer){
+    let best = null, bestFrac = Infinity;
+    const consider = (t) => {
+      if (t.maxHp - t.hp < WATERMELON_HEAL_MISSING) return; // only allies down by 50+ HP
+      if (angleBetween(farmer.dir, t.dir) > WATERMELON_THROW_RANGE) return;
+      const frac = t.hp / t.maxHp; // lowest remaining HP gets priority
+      if (frac < bestFrac){ bestFrac = frac; best = t; }
+    };
+    for (const ch of characters) if (ch !== farmer && ch.alive && ch.team === farmer.team) consider(ch);
+    for (const m of teamMobs(farmer.team)) consider(m);
+    return best;
+  }
+  function healTarget(target, amount){
+    const healed = Math.min(target.maxHp - target.hp, amount);
+    if (healed <= 0) return;
+    target.hp += healed;
+    if (target.role){
+      updateHPBarSprite(target.hpBar, target.hp / target.maxHp);
+      spawnFloatingNumber(target.dir, CHAR_LOCAL_R, healed, '#3dff6e');
+    } else {
+      target.mesh.material.color.copy(target.baseColor).lerp(MOB_DAMAGED_COLOR, 1 - target.hp / target.maxHp);
+      if (target.hpBar) updateHPBarSprite(target.hpBar, target.hp / target.maxHp);
+      spawnFloatingNumber(target.dir, mobVisualRadius(target), healed, '#3dff6e');
+    }
+  }
+  function throwWatermelon(farmer, target, rainbow){
+    const mesh = new THREE.Mesh(watermelonGeo, rainbow ? rainbowMelonMat : watermelonMat);
+    mesh.scale.setScalar(R * CROP_RADIUS * 0.6);
+    sphereGroup.add(mesh);
+    netPushEvent('w' + encDir(farmer.dir) + encDir(target.dir) + (rainbow ? '1' : '0'));
+    watermelonThrows.push({ mesh, from: farmer.dir.clone(), target, t: 0, duration: 0.45, heal: rainbow ? RAINBOW_MELON_HEAL : WATERMELON_HEAL });
+  }
+  // Rainbow melons go to allies hurt badly enough to use them (or when
+  // it's all that's left in stock).
+  function shouldUseRainbow(total, rainbow, target){
+    if (rainbow <= 0) return false;
+    return rainbow >= total || (target.maxHp - target.hp) >= RAINBOW_MELON_MISSING;
+  }
+  function updateWatermelonThrows(dt){
+    for (let i = watermelonThrows.length - 1; i >= 0; i--){
+      const w = watermelonThrows[i];
+      if (!isHealTargetAlive(w.target)){
+        sphereGroup.remove(w.mesh); watermelonThrows.splice(i, 1); continue;
+      }
+      w.t += dt;
+      const p = Math.min(1, w.t / w.duration);
+      const d = slerpVec(w.from, w.target.dir, p).normalize();
+      w.mesh.position.copy(d).multiplyScalar(R * 1.04 + Math.sin(Math.PI * p) * 0.35);
+      w.mesh.rotation.x += dt * 10;
+      if (p >= 1){
+        healTarget(w.target, w.heal || WATERMELON_HEAL);
+        sphereGroup.remove(w.mesh);
+        watermelonThrows.splice(i, 1);
+      }
+    }
+  }
+
+  function updateFarmer(ch, dt, now){
+    if (!ch.stockLabel){
+      ch.stockLabel = makeStockLabelSprite();
+      ch.watermelons = 0;
+      ch.nextThrowAt = 0;
+      sphereGroup.add(ch.stockLabel);
+    }
+    if (!ch.alive){ ch.stockLabel.visible = false; return; }
+    // Harvest a ripe watermelon underfoot.
+    if (ch.watermelons < WATERMELON_MAX_STOCK){
+      for (let i = crops.length - 1; i >= 0; i--){
+        const crop = crops[i];
+        if (crop.team === ch.team && crop.ripe && angleBetween(crop.dir, ch.dir) <= CROP_RADIUS){
+          if (crop.rainbow) ch.rainbowMelons = (ch.rainbowMelons || 0) + 1;
+          removeCrop(i);
+          ch.watermelons++;
+          break;
+        }
+      }
+    }
+    // Plant a seed underfoot, on farm ground, where no other seed's circle overlaps.
+    const idx = dirToGridIdx(ch.dir);
+    if (farmTeam(idx) === ch.team && crops.reduce((n, c) => n + (c.team === ch.team ? 1 : 0), 0) < MAX_CROPS){
+      let clear = true;
+      for (const crop of crops){
+        if (angleBetween(crop.dir, ch.dir) < CROP_RADIUS * 2){ clear = false; break; }
+      }
+      if (clear) plantCrop(ch.dir, idx, ch.team);
+    }
+    // Throw one to the most-hurt ally in range.
+    if (ch.watermelons > 0 && now >= ch.nextThrowAt){
+      const target = pickHealTarget(ch);
+      if (target){
+        const rb = shouldUseRainbow(ch.watermelons, ch.rainbowMelons || 0, target);
+        if (rb) ch.rainbowMelons--;
+        ch.watermelons--;
+        throwWatermelon(ch, target, rb);
+        ch.nextThrowAt = now + WATERMELON_THROW_INTERVAL_MS;
+      }
+    }
+    ch.stockLabel.position.copy(ch.dir).multiplyScalar(R * 1.02 + CHAR_LOCAL_R + 0.38);
+    refreshStockLabel(ch);
+  }
+
+  // ================= 畑陣地: farmer mobs and scarecrow mobs =================
+  // Farm ground (A's reinforced ground, green-outlined) has its own spawn
+  // table: farmer mob 99% / gold (silver) 1%. A new patch of farm also
+  // brings one scarecrow that guards and tends that farm.
+  let FARM_GOLD_CHANCE = 0.01;
+  let FARM_FARMER_CHANCE = 0.80; // the rest (19%) is an ordinary pink / blue mob
+  let WATERMELON_HEAL_MISSING = 50; // only allies missing at least this much HP get a melon
+  let FARMER_MOB_HP = 100;
+  let FARMER_MOB_SPEED = 0.08 * Math.PI / 180;
+  let FARMER_MOB_SENSE = 10 * Math.PI / 180;
+  let FARMER_MOB_THROW_MS = 1800;
+  let FARMER_MOB_MASS = 1;
+  let FARMER_MAX_STOCK = 3;  // harvests up to this many; once full it follows an ally and hands them out
+  let SCARECROW_HP = 150;
+  let SCARECROW_SPEED = 0.08 * Math.PI / 180;
+  let SCARECROW_DMG_MIN = 11, SCARECROW_DMG_MAX = 18;
+  let SCARECROW_COOLDOWN_MS = 1100;
+  let SCARECROW_RANGE = 9 * Math.PI / 180;
+  let SCARECROW_PLANT_MS = 1500; // plants at most once per this long
+  let SCARECROW_MASS = 3;
+  let SCARECROW_FARM_REGEN = 1; // HP per second while standing on its farm
+  const SCARECROW_SIZE_MULT = 2.5; // between the big pink mob (2) and the black mob (3)
+
+  // A fixed planting lattice over the whole globe, laid out as a square
+  // grid: the globe is split into the 6 faces of a cube, and on each face
+  // the points sit on two sets of straight lines (great circles) crossing
+  // at right angles, one seed-width apart — so seeds line up both across
+  // and down. (Spacing is exact near a face's middle and tightens slightly
+  // toward its corners; points that would overlap a neighbour are simply
+  // skipped there.)
+  function cropLatticeSpacing(){ return CROP_RADIUS * 2 * 1.02; }
+  const LATTICE_FACES = [
+    [new THREE.Vector3( 1, 0, 0), new THREE.Vector3(0, 0, -1), new THREE.Vector3(0, 1, 0)],
+    [new THREE.Vector3(-1, 0, 0), new THREE.Vector3(0, 0,  1), new THREE.Vector3(0, 1, 0)],
+    [new THREE.Vector3(0,  1, 0), new THREE.Vector3(1, 0,  0), new THREE.Vector3(0, 0, -1)],
+    [new THREE.Vector3(0, -1, 0), new THREE.Vector3(1, 0,  0), new THREE.Vector3(0, 0,  1)],
+    [new THREE.Vector3(0, 0,  1), new THREE.Vector3(1, 0,  0), new THREE.Vector3(0, 1,  0)],
+    [new THREE.Vector3(0, 0, -1), new THREE.Vector3(-1, 0, 0), new THREE.Vector3(0, 1,  0)],
+  ];
+  function snapToLattice(dir){
+    const s = cropLatticeSpacing();
+    const ax = Math.abs(dir.x), ay = Math.abs(dir.y), az = Math.abs(dir.z);
+    const f = (ax >= ay && ax >= az) ? (dir.x > 0 ? 0 : 1) : (ay >= az ? (dir.y > 0 ? 2 : 3) : (dir.z > 0 ? 4 : 5));
+    const [n, ea, eb] = LATTICE_FACES[f];
+    const dn = dir.dot(n);
+    const lim = Math.floor((Math.PI / 4) / s);
+    const i = THREE.MathUtils.clamp(Math.round(Math.atan(dir.dot(ea) / dn) / s), -lim, lim);
+    const j = THREE.MathUtils.clamp(Math.round(Math.atan(dir.dot(eb) / dn) / s), -lim, lim);
+    return { key: f * 1000000 + (i + 500) * 1000 + (j + 500), dir: latticePointDir(f, i, j), f, i, j, lim };
+  }
+  function latticePointDir(f, i, j){
+    const s = cropLatticeSpacing();
+    const [n, ea, eb] = LATTICE_FACES[f];
+    return n.clone().addScaledVector(ea, Math.tan(i * s)).addScaledVector(eb, Math.tan(j * s)).normalize();
+  }
+  // The lattice grouped into 2x2 squares (fixed, non-overlapping: each
+  // starts on an even row and column). A scarecrow plants one whole square
+  // — its four corners — at a time. Only squares whose four corners all lie
+  // on this scarecrow's farm count.
+  function farmLatticeBlocks(mob){
+    const seen = new Map();
+    for (const idx of mob.farm){
+      const pt = snapToLattice(cellIdxToDir(idx));
+      const bi = Math.floor(pt.i / 2) * 2, bj = Math.floor(pt.j / 2) * 2;
+      const key = pt.f * 1000000 + (bi + 500) * 1000 + (bj + 500);
+      if (seen.has(key)) continue;
+      seen.set(key, null);
+      if (bi + 1 > pt.lim || bi < -pt.lim || bj + 1 > pt.lim || bj < -pt.lim) continue;
+      const corners = [[bi, bj], [bi + 1, bj], [bi, bj + 1], [bi + 1, bj + 1]].map(([i, j]) => latticePointDir(pt.f, i, j));
+      if (!corners.every(d => mob.farm.has(dirToGridIdx(d)))) continue;
+      const center = corners.reduce((a, d) => a.add(d), new THREE.Vector3()).normalize();
+      seen.set(key, { center, corners });
+    }
+    return [...seen.values()].filter(Boolean);
+  }
+  function blockHasRoom(b){ return b.corners.some(isPlantableSpot); }
+  function isPlantableSpot(dir){
+    for (const crop of crops) if (angleBetween(crop.dir, dir) < CROP_RADIUS * 2) return false;
+    return true;
+  }
+  function teamCropCount(t){ let n = 0; for (const c of crops) if (c.team === t) n++; return n; }
+
+  // ---- farmer mob ----
+  const farmerTextures = [0, 1].map(t => {
+    const c = document.createElement('canvas');
+    c.width = 64; c.height = 32;
+    const ctx = c.getContext('2d');
+    ctx.fillStyle = t === 0 ? '#' + PINK_MOB_COLOR.getHexString() : '#' + BLUE_MOB_COLOR.getHexString();
+    ctx.fillRect(0, 0, 64, 32);
+    ctx.fillStyle = '#1c6a22';
+    for (let s = 0; s < 6; s++){
+      for (let y = 0; y < 32; y++){
+        const x = s * 10.7 + 3 + Math.sin(y * 0.55 + s) * 1.8;
+        ctx.fillRect(x, y, 3, 1);
+      }
+    }
+    const tex = new THREE.CanvasTexture(c);
+    tex.wrapS = THREE.RepeatWrapping;
+    return tex;
+  });
+  function makeFarmerMobMesh(t){
+    return new THREE.Mesh(
+      new THREE.ConeGeometry(MOB_LOCAL_R, MOB_LOCAL_R * 2.1, 3),
+      new THREE.MeshBasicMaterial({ color: 0xffffff, map: farmerTextures[t] })
+    );
+  }
+  function spawnFarmerMob(t, dir){
+    const list = teamMobs(t);
+    if (list.length >= MAX_MOBS_PER_TEAM) return;
+    const mesh = makeFarmerMobMesh(t);
+    mesh.position.copy(dir).multiplyScalar(R * 1.02);
+    mesh.quaternion.setFromUnitVectors(MOB_UP, dir);
+    sphereGroup.add(mesh);
+    const auraRing = makeAuraRing(t === 0 ? 0xff5a9e : 0x5ad0ff);
+    updateAuraRingTransform(auraRing, dir, FARMER_MOB_SENSE);
+    sphereGroup.add(auraRing);
+    list.push({
+      team: t === 0 ? 'pink' : 'blue', isBig: false, isGold: false, isGray: false, isFarmer: true,
+      mesh, auraRing, hpBar: null, baseColor: mesh.material.color.clone(), dir: dir.clone(),
+      hp: FARMER_MOB_HP, maxHp: FARMER_MOB_HP, netId: takeMobNetId(),
+      targetKind: null, target: null, nextRetargetAt: 0, lastAttackAt: -999, spinT: 0, erodeProgress: 0,
+      kbRemaining: 0, kbCenter: null, stunUntil: 0,
+      melons: 0, throwing: false, nextThrowAt: 0
+    });
+  }
+  // Out of melons after handing them out: it's an ordinary pink / blue mob
+  // from now on (keeps its HP).
+  function farmerBecomesNormal(mob, t){
+    mob.isFarmer = false;
+    mob.melons = 0; mob.rainbow = 0;
+    mob.mesh.material.dispose();
+    mob.mesh.material = new THREE.MeshBasicMaterial({ color: (t === 0 ? PINK_MOB_COLOR : BLUE_MOB_COLOR).clone() });
+    mob.baseColor = mob.mesh.material.color.clone();
+    mob.mesh.material.color.copy(mob.baseColor).lerp(MOB_DAMAGED_COLOR, 1 - mob.hp / mob.maxHp);
+    mob.targetKind = null; mob.target = null; mob.nextRetargetAt = 0;
+  }
+  function pickMobHealTarget(mob, t){
+    let best = null, bestFrac = Infinity;
+    for (const m of teamMobs(t)){
+      if (m.maxHp - m.hp < WATERMELON_HEAL_MISSING) continue;
+      if (angleBetween(mob.dir, m.dir) > FARMER_MOB_SENSE) continue;
+      const f = m.hp / m.maxHp;
+      if (f < bestFrac){ bestFrac = f; best = m; }
+    }
+    return best;
+  }
+  function updateFarmerMob(mob, list, i, isPink, dt, now){
+    const t = isPink ? 0 : 1;
+    // Harvesting phase: pick up a ripe melon it is standing on.
+    if (!mob.throwing && mob.melons < FARMER_MAX_STOCK){
+      for (let k = crops.length - 1; k >= 0; k--){
+        const c = crops[k];
+        if (c.team === t && c.ripe && angleBetween(c.dir, mob.dir) <= CROP_RADIUS){
+          if (c.rainbow) mob.rainbow = (mob.rainbow || 0) + 1;
+          removeCrop(k); mob.melons++;
+          if (mob.melons >= FARMER_MAX_STOCK) mob.throwing = true;
+          break;
+        }
+      }
+    }
+    // Full stack (3): hand melons out to hurt allies nearby.
+    if (mob.throwing && mob.melons > 0 && now >= mob.nextThrowAt){
+      const target = pickMobHealTarget(mob, t);
+      if (target){
+        const rb = shouldUseRainbow(mob.melons, mob.rainbow || 0, target);
+        if (rb) mob.rainbow--;
+        mob.melons--;
+        throwWatermelon(mob, target, rb);
+        mob.nextThrowAt = now + FARMER_MOB_THROW_MS;
+        if (mob.melons <= 0){ farmerBecomesNormal(mob, t); return; }
+      }
+    }
+    // Where to walk.
+    let goal = null;
+    if (!mob.throwing){
+      // Below a full stack: go for the nearest ripe melon, however far.
+      // (The sense range is only for choosing who to throw melons to.)
+      let best = null, bestD = Infinity;
+      for (const c of crops){
+        if (c.team !== t || !c.ripe) continue;
+        const d = angleBetween(mob.dir, c.dir);
+        if (d < bestD){ bestD = d; best = c; }
+      }
+      if (best) goal = best.dir;
+    }
+    if (!goal && mob.throwing){
+      // Tag along with the nearest ally that isn't a farmer or a scarecrow.
+      let best = null, bestD = Infinity;
+      for (const m of list){
+        if (m === mob || m.isFarmer || m.isScarecrow) continue;
+        const d = angleBetween(mob.dir, m.dir);
+        if (d < bestD){ bestD = d; best = m; }
+      }
+      if (best && bestD > mobVisualRadius(best) / R + 3 * Math.PI / 180) goal = best.dir;
+    }
+    // (No melon in sight and not full yet: it just stays put.)
+    if (goal) mob.dir = computeMobStep(mob, goal, FARMER_MOB_SPEED * frameSpeedScale);
+    mob.dir = pushFreeEntityOutOfObstacles(mob.dir, 0);
+    mob.mesh.position.copy(mob.dir).multiplyScalar(R * 1.02);
+    mob.mesh.quaternion.setFromUnitVectors(MOB_UP, mob.dir);
+    if (mob.spinT > 0) applyMobSpin(mob.mesh, mob.spinT);
+    updateAuraRingTransform(mob.auraRing, mob.dir, FARMER_MOB_SENSE);
+  }
+
+  // ---- scarecrow mob ----
+  // Cone hat, ball head, an upright post and a crossbar, all one mesh
+  // (merged by hand) so it tints and spins like every other mob.
+  function mergeGeometries(parts){
+    let total = 0;
+    const flat = parts.map(g => { const n = g.index ? g.toNonIndexed() : g; total += n.attributes.position.count; return n; });
+    const pos = new Float32Array(total * 3), nor = new Float32Array(total * 3);
+    let o = 0;
+    for (const g of flat){
+      pos.set(g.attributes.position.array, o * 3);
+      nor.set(g.attributes.normal.array, o * 3);
+      o += g.attributes.position.count;
+    }
+    const out = new THREE.BufferGeometry();
+    out.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    out.setAttribute('normal', new THREE.BufferAttribute(nor, 3));
+    return out;
+  }
+  function makeScarecrowMesh(t){
+    const h = MOB_LOCAL_R * SCARECROW_SIZE_MULT * 2.4; // overall height
+    const post = new THREE.CylinderGeometry(h * 0.045, h * 0.045, h * 0.62, 10); post.translate(0, h * 0.31, 0);
+    const bar = new THREE.CylinderGeometry(h * 0.04, h * 0.04, h * 0.66, 10); bar.rotateZ(Math.PI / 2); bar.translate(0, h * 0.42, 0);
+    const head = new THREE.SphereGeometry(h * 0.15, 16, 12); head.translate(0, h * 0.66, 0);
+    const hat = new THREE.ConeGeometry(h * 0.2, h * 0.3, 16); hat.translate(0, h * 0.85, 0);
+    const geo = mergeGeometries([post, bar, head, hat]);
+    const col = t === 0 ? 0xe600c8 : 0x19b8e6;
+    return new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: col, roughness: 0.55, metalness: 0.05 }));
+  }
+  function spawnScarecrow(t, farmCellsNew){
+    const list = teamMobs(t);
+    if (list.length >= MAX_MOBS_PER_TEAM || !farmCellsNew.length) return;
+    const idx = farmCellsNew[Math.floor(Math.random() * farmCellsNew.length)];
+    const dir = cellIdxToDir(idx);
+    const mesh = makeScarecrowMesh(t);
+    mesh.position.copy(dir).multiplyScalar(R * 1.02);
+    mesh.quaternion.setFromUnitVectors(MOB_UP, dir);
+    sphereGroup.add(mesh);
+    const auraRing = makeAuraRing(t === 0 ? 0xff5a9e : 0x5ad0ff);
+    updateAuraRingTransform(auraRing, dir, SCARECROW_RANGE);
+    sphereGroup.add(auraRing);
+    const mob = {
+      team: t === 0 ? 'pink' : 'blue', isBig: false, isGold: false, isGray: false, isScarecrow: true,
+      mesh, auraRing, hpBar: null, baseColor: mesh.material.color.clone(), dir: dir.clone(),
+      hp: SCARECROW_HP, maxHp: SCARECROW_HP, netId: takeMobNetId(),
+      targetKind: null, target: null, nextRetargetAt: 0, lastAttackAt: -999, spinT: 0, erodeProgress: 0,
+      kbRemaining: 0, kbCenter: null, stunUntil: 0,
+      farm: new Set(), farmCheckAt: 0, wanderTarget: null, nextPlantAt: 0, lattice: [], plantSpot: null, plantBlock: null
+    };
+    scarecrowRefreshFarm(mob, t, idx);
+    list.push(mob);
+  }
+  // The farm = the connected patch of this team's farm ground around `seed`.
+  function farmComponentFrom(seed, t){
+    const out = new Set();
+    if (farmTeam(seed) !== t) return out;
+    const stack = [seed];
+    out.add(seed);
+    while (stack.length){
+      const idx = stack.pop();
+      const gx = idx % GRID_W, gy = (idx / GRID_W) | 0;
+      const nb = [gy * GRID_W + (gx + 1) % GRID_W, gy * GRID_W + (gx - 1 + GRID_W) % GRID_W];
+      if (gy > 0) nb.push(idx - GRID_W);
+      if (gy < GRID_H - 1) nb.push(idx + GRID_W);
+      for (const n of nb){
+        if (!out.has(n) && farmTeam(n) === t){ out.add(n); stack.push(n); }
+      }
+    }
+    return out;
+  }
+  // Re-reads the scarecrow's farm. If it got split, it keeps the piece
+  // nearest to itself; if none of it is left, returns false (it vanishes).
+  function scarecrowRefreshFarm(mob, t, seed){
+    if (seed !== undefined){ mob.farm = farmComponentFrom(seed, t); return mob.farm.size > 0; }
+    let best = -1, bestD = Infinity;
+    for (const idx of mob.farm){
+      if (farmTeam(idx) !== t) continue;
+      const d = angleBetween(mob.dir, cellIdxToDir(idx));
+      if (d < bestD){ bestD = d; best = idx; }
+    }
+    if (best === -1){ mob.farm = new Set(); return false; }
+    // Also takes in farm ground newly joined onto it.
+    mob.farm = farmComponentFrom(best, t);
+    return mob.farm.size > 0;
+  }
+  function randomFarmCell(mob){
+    let k = Math.floor(Math.random() * mob.farm.size);
+    for (const idx of mob.farm){ if (k-- <= 0) return idx; }
+    return null;
+  }
+  function nearestFarmDir(mob){
+    let best = null, bestD = Infinity;
+    for (const idx of mob.farm){
+      const d = cellIdxToDir(idx);
+      const a = angleBetween(mob.dir, d);
+      if (a < bestD){ bestD = a; best = d; }
+    }
+    return best;
+  }
+  // Farm ground taken by the enemy: remembered for a few seconds so the
+  // scarecrow of that farm can rush over.
+  const farmRaids = []; // { dir, team, at }
+  function noteFarmRaid(idx, team){
+    const now = performance.now();
+    const dir = cellIdxToDir(idx);
+    for (const r of farmRaids) if (r.team === team && angleBetween(r.dir, dir) < 3 * Math.PI / 180){ r.at = now; return; }
+    farmRaids.push({ dir, idx, team, at: now });
+    if (farmRaids.length > 40) farmRaids.shift();
+  }
+  function scarecrowEnemies(t, fn){
+    const e = 1 - t;
+    for (const m of teamMobs(e)) fn(m, false);
+    for (const ch of charTargets()) if (ch.alive && ch.team === e) fn(ch, true);
+  }
+  function updateScarecrowMob(mob, list, i, isPink, dt, now){
+    const t = isPink ? 0 : 1;
+    if (now >= mob.farmCheckAt || farmDirty){
+      mob.farmCheckAt = now + 500;
+      if (!scarecrowRefreshFarm(mob, t)){ removeMob(list, i); return; } // its farm is gone
+      mob.lattice = farmLatticeBlocks(mob);
+      if (farmDirty) mob.skipSpots = null; // the farm changed: give every spot another chance
+    }
+    const hereIdx = dirToGridIdx(mob.dir);
+    const inFarm = mob.farm.has(hereIdx);
+    // On farm ground: +1 HP every second (only while hurt).
+    if (farmTeam(hereIdx) === t && mob.hp < mob.maxHp){
+      if (!mob.nextRegenAt) mob.nextRegenAt = now + 1000;
+      else if (now >= mob.nextRegenAt){ mob.nextRegenAt += 1000; healTarget(mob, SCARECROW_FARM_REGEN); }
+    } else mob.nextRegenAt = 0;
+    // Spin attack: every enemy within range, whenever one is there.
+    let enemyNear = false;
+    scarecrowEnemies(t, (x) => { if (angleBetween(mob.dir, x.dir) <= SCARECROW_RANGE) enemyNear = true; });
+    if (enemyNear && now - mob.lastAttackAt >= SCARECROW_COOLDOWN_MS){
+      mob.lastAttackAt = now;
+      mob.spinT = MOB_SPIN_DURATION;
+      const hits = [];
+      scarecrowEnemies(t, (x, isChar) => { if (angleBetween(mob.dir, x.dir) <= SCARECROW_RANGE) hits.push([x, isChar]); });
+      for (const [x, isChar] of hits){
+        const dmg = SCARECROW_DMG_MIN + Math.random() * (SCARECROW_DMG_MAX - SCARECROW_DMG_MIN);
+        if (isChar) damageCharacter(x, dmg);
+        else damageMobInList(teamMobs(1 - t), x, dmg);
+      }
+    }
+    let goal = null;
+    // A raid on its farm in the last few seconds: go there.
+    for (let k = farmRaids.length - 1; k >= 0; k--){
+      const r = farmRaids[k];
+      if (now - r.at > 5000){ farmRaids.splice(k, 1); continue; }
+      if (r.team !== t) continue;
+      // Was it this farm? (a neighbouring cell still belongs to it)
+      const gx = r.idx % GRID_W, gy = (r.idx / GRID_W) | 0;
+      let mine = false;
+      for (let dy = -2; dy <= 2 && !mine; dy++) for (let dx = -2; dx <= 2 && !mine; dx++){
+        const y = gy + dy; if (y < 0 || y >= GRID_H) continue;
+        if (mob.farm.has(y * GRID_W + (gx + dx + GRID_W) % GRID_W)) mine = true;
+      }
+      if (mine){ goal = r.dir; break; }
+    }
+    if (!inFarm && !goal) goal = nearestFarmDir(mob); // strayed out: head back in
+    // Neat squares: walk to the middle of the nearest 2x2 lattice square
+    // on the farm that still has room, and plant all four corners at once
+    // (at most once every SCARECROW_PLANT_MS).
+    if (!goal && teamCropCount(t) < MAX_CROPS){
+      if (!mob.plantBlock || !blockHasRoom(mob.plantBlock) || !mob.farm.has(dirToGridIdx(mob.plantBlock.center))){
+        mob.plantBlock = null; mob.plantSpot = null;
+        let bestD = Infinity;
+        for (const b of mob.lattice){
+          if (!blockHasRoom(b)) continue;
+          if (mob.skipSpots && mob.skipSpots.some(x => angleBetween(x, b.center) < 1e-3)) continue; // couldn't reach it earlier
+          const a = angleBetween(mob.dir, b.center);
+          if (a < bestD){ bestD = a; mob.plantBlock = b; mob.plantSpot = b.center; }
+        }
+      }
+      if (mob.plantSpot){
+        if (angleBetween(mob.dir, mob.plantSpot) < 0.3 * Math.PI / 180){
+          if (now >= mob.nextPlantAt){
+            for (const d of mob.plantBlock.corners){
+              if (teamCropCount(t) >= MAX_CROPS) break;
+              const idx = dirToGridIdx(d);
+              if (farmTeam(idx) === t && isPlantableSpot(d)) plantCrop(d, idx, t);
+            }
+            mob.nextPlantAt = now + SCARECROW_PLANT_MS;
+            mob.plantSpot = null; mob.plantBlock = null;
+          }
+          // (waits on the spot until it may plant again)
+          mob.wanderTarget = null;
+          goal = null;
+        } else {
+          goal = mob.plantSpot;
+        }
+        if (!goal){
+          // standing on its spot: don't wander off
+          mob.dir = pushFreeEntityOutOfObstacles(mob.dir, 0);
+          mob.mesh.position.copy(mob.dir).multiplyScalar(R * 1.02);
+          mob.mesh.quaternion.setFromUnitVectors(MOB_UP, mob.dir);
+          if (mob.spinT > 0) applyMobSpin(mob.mesh, mob.spinT, MOB_UP);
+          updateAuraRingTransform(mob.auraRing, mob.dir, SCARECROW_RANGE);
+          return;
+        }
+      }
+    }
+    if (!goal){
+      // Wander the farm, favouring spots with room for a seed.
+      if (!mob.wanderTarget || !mob.farm.has(dirToGridIdx(mob.wanderTarget)) || angleBetween(mob.dir, mob.wanderTarget) < 0.01){
+        mob.wanderTarget = null;
+        for (let tries = 0; tries < 12; tries++){
+          const idx = randomFarmCell(mob);
+          if (idx === null) break;
+          const d = cellIdxToDir(idx);
+          mob.wanderTarget = d;
+          if (isPlantableSpot(d)) break;
+        }
+      }
+      if (mob.wanderTarget) goal = mob.wanderTarget;
+    }
+    if (goal){
+      let next = computeMobStep(mob, goal, SCARECROW_SPEED * frameSpeedScale);
+      // Never steps off its own farm on purpose (unless it's already off it).
+      if (inFarm && !mob.farm.has(dirToGridIdx(next))){
+        next = mob.dir;
+        if (goal === mob.wanderTarget) mob.wanderTarget = null; // no way through inside the farm: pick another spot
+        if (goal === mob.plantSpot){
+          (mob.skipSpots || (mob.skipSpots = [])).push(mob.plantSpot);
+          if (mob.skipSpots.length > 16) mob.skipSpots.shift();
+          mob.plantSpot = null; mob.plantBlock = null;
+        }
+      }
+      mob.dir = next;
+    }
+    mob.dir = pushFreeEntityOutOfObstacles(mob.dir, 0);
+    mob.mesh.position.copy(mob.dir).multiplyScalar(R * 1.02);
+    mob.mesh.quaternion.setFromUnitVectors(MOB_UP, mob.dir);
+    if (mob.spinT > 0) applyMobSpin(mob.mesh, mob.spinT, MOB_UP); // a flat, horizontal twirl
+    updateAuraRingTransform(mob.auraRing, mob.dir, SCARECROW_RANGE);
   }
 
   // ---------- B: one-way ✕ marks. Stepping on one throws you to the exact
@@ -4306,12 +5080,397 @@ window.createPeerRoom = function(roomCode){
     wolfEars.position.copy(_earPos);
   }
 
-  // Everything that can be hit as a "character" (no extra chain links any more).
-  function charTargets(){ return characters; }
+  // ================= 赤い点B【リロードの能力】 =================
+  // B is a chain: the head (B1, the character itself) plus B2..B5 and a
+  // yellow triangular tail, each following exactly in the head's footsteps
+  // at fixed spacing, tied together by thin cords. A red ball is born at
+  // the tail whenever it stands on the team's red (level 3) ground and is
+  // handed forward one link every 3 s — all links throwing together — until
+  // B1 lobs it at an enemy in range, where it explodes.
+  let BSEG_HP = 300;
+  let BSEG_REVIVE_MS = 10000;
+  let B_RELAY_MS = 3000;          // hand-off interval (= B1's attack frequency)
+  let B_ATTACK_RANGE = 10 * Math.PI / 180;
+  let B_BLAST_RADIUS = 7 * Math.PI / 180;
+  let B_BLAST_DMG_MIN = 98, B_BLAST_DMG_MAX = 111;
+  const BSEG_COUNT = 5;           // B2, B3, B4, B5, tail
+  const BSEG_R = CHAR_LOCAL_R * 0.75;
+  const BSEG_OFFSETS = (() => {   // arc distance of each follower behind the head
+    const first = (CHAR_LOCAL_R + BSEG_R + 0.035) / R;
+    const step = (BSEG_R * 2 + 0.035) / R;
+    return [0, 1, 2, 3, 4].map(k => first + step * k);
+  })();
+  const BSEG_NAMES = ['B2', 'B3', 'B4', 'B5', '尻尾'];
+
+  function makeAuraSprite(team){
+    // A strong, saturated ring drawn with normal blending (additive glow
+    // all but vanished against the pale globe).
+    const rgb = team === 0 ? ['255,20,20', '230,0,0', '200,0,0'] : ['20,90,255', '0,60,230', '0,40,200'];
+    const cv = document.createElement('canvas');
+    cv.width = 128; cv.height = 128;
+    const ctx = cv.getContext('2d');
+    const g = ctx.createRadialGradient(64, 64, 6, 64, 64, 64);
+    g.addColorStop(0, `rgba(${rgb[0]},0.15)`);
+    g.addColorStop(0.3, `rgba(${rgb[0]},0.85)`);
+    g.addColorStop(0.55, `rgba(${rgb[1]},0.6)`);
+    g.addColorStop(0.8, `rgba(${rgb[2]},0.25)`);
+    g.addColorStop(1, `rgba(${rgb[2]},0)`);
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, 128, 128);
+    const spr = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(cv), transparent: true, depthWrite: false }));
+    spr.renderOrder = 5;
+    spr.visible = false;
+    sphereGroup.add(spr);
+    return spr;
+  }
+  const bCordMat = new THREE.MeshBasicMaterial({ color: 0x1a1a1a });
+  const bCordGeo = new THREE.CylinderGeometry(0.008, 0.008, 1, 6);
+  const bBallGeo = new THREE.SphereGeometry(0.045, 12, 10);
+  const bBallMats = [new THREE.MeshBasicMaterial({ color: 0xff2020 }), new THREE.MeshBasicMaterial({ color: 0x2060ff })];
+
+  function makeBSegMesh(k, team){
+    if (k === BSEG_COUNT - 1){
+      // Tail: a flat yellow triangle.
+      const m = new THREE.Mesh(new THREE.ConeGeometry(BSEG_R * 1.25, BSEG_R * 0.5, 3), new THREE.MeshBasicMaterial({ color: 0xf2f200 }));
+      return m;
+    }
+    return new THREE.Mesh(new THREE.SphereGeometry(BSEG_R, 16, 16), new THREE.MeshBasicMaterial({ color: CHAR_COLORS[team] }));
+  }
+  // Set up the chain for a B character (both on the host and on player 2's page).
+  function ensureBChain(ch){
+    if (ch.bsegs) return;
+    ch.bHist = [];      // head positions, newest first
+    ch.bHistLen = [];   // cumulative arc length from the newest
+    ch.bBall = false;   // B1 holds a ball
+    ch.bAura = makeAuraSprite(ch.team);
+    ch.bRelayAt = 0;
+    ch.bsegs = [];
+    for (let k = 0; k < BSEG_COUNT; k++){
+      const mesh = makeBSegMesh(k, ch.team);
+      const hpBar = makeHPBarSprite();
+      hpBar.scale.multiplyScalar(0.7);
+      const seg = {
+        isBSeg: true, owner: ch, k, team: ch.team, role: 'Bseg',
+        dir: ch.dir.clone(), hp: BSEG_HP, maxHp: BSEG_HP, alive: false,
+        mesh, hpBar, aura: makeAuraSprite(ch.team), ball: false, reviveAt: 0, stunUntil: 0
+      };
+      ch.bsegs.push(seg);
+    }
+    ch.bCords = [];
+    for (let k = 0; k < BSEG_COUNT; k++){
+      const c = new THREE.Mesh(bCordGeo, bCordMat);
+      c.visible = false;
+      sphereGroup.add(c);
+      ch.bCords.push(c);
+    }
+    resetBHistory(ch);
+  }
+  // A straight line of history trailing behind the head, so the chain has
+  // somewhere to stand before the head has walked anywhere.
+  function resetBHistory(ch){
+    const d = ch.dir.clone().normalize();
+    let a = new THREE.Vector3().crossVectors(d, new THREE.Vector3(0, 1, 0));
+    if (a.lengthSq() < 1e-6) a.set(1, 0, 0);
+    a.normalize();
+    const total = BSEG_OFFSETS[BSEG_COUNT - 1] + 0.05;
+    ch.bHist = []; ch.bHistLen = [];
+    const n = 24;
+    for (let i = 0; i <= n; i++){
+      const ang = total * i / n;
+      ch.bHist.push(d.clone().applyAxisAngle(a, -ang).normalize());
+      ch.bHistLen.push(ang);
+    }
+  }
+  function pushBHistory(ch){
+    const head = ch.dir;
+    const last = ch.bHist[0];
+    const step = angleBetween(head, last);
+    if (step > 0.35){ resetBHistory(ch); return; } // teleported (respawn / warp)
+    if (step < 0.002) return;
+    ch.bHist.unshift(head.clone());
+    for (let i = 0; i < ch.bHistLen.length; i++) ch.bHistLen[i] += step;
+    ch.bHistLen.unshift(0);
+    const need = BSEG_OFFSETS[BSEG_COUNT - 1] + 0.05;
+    while (ch.bHist.length > 2 && ch.bHistLen[ch.bHistLen.length - 2] > need){ ch.bHist.pop(); ch.bHistLen.pop(); }
+  }
+  function bHistPoint(ch, s){
+    const h = ch.bHist, L = ch.bHistLen;
+    for (let i = 1; i < h.length; i++){
+      if (L[i] >= s){
+        const span = L[i] - L[i - 1];
+        const f = span > 1e-9 ? (s - L[i - 1]) / span : 0;
+        return slerpVec(h[i - 1], h[i], f).normalize();
+      }
+    }
+    return h[h.length - 1].clone();
+  }
+  function showBSeg(seg, on){
+    const f = on ? 'add' : 'remove';
+    sphereGroup[f](seg.mesh); sphereGroup[f](seg.hpBar);
+    if (!on){ seg.aura.visible = false; }
+  }
+  function layoutBChain(ch){
+    const alive = ch.alive;
+    const now = performance.now();
+    const pulse = 1 + 0.12 * Math.sin(now * 0.006);
+    // head aura
+    ch.bAura.visible = alive && ch.bBall;
+    if (ch.bAura.visible){
+      ch.bAura.position.copy(ch.dir).multiplyScalar(R * 1.02);
+      const s = CHAR_LOCAL_R * 5.2 * pulse; ch.bAura.scale.set(s, s, 1);
+    }
+    let prevDir = ch.dir, prevAlive = alive;
+    for (let k = 0; k < BSEG_COUNT; k++){
+      const seg = ch.bsegs[k];
+      const cord = ch.bCords[k];
+      if (!seg.alive){ cord.visible = false; seg.aura.visible = false; prevAlive = false; continue; }
+      seg.dir = bHistPoint(ch, BSEG_OFFSETS[k]);
+      seg.mesh.position.copy(seg.dir).multiplyScalar(R * 1.02);
+      if (k === BSEG_COUNT - 1){
+        // tail triangle lies flat, one corner pointing away from B5
+        seg.mesh.quaternion.setFromUnitVectors(MOB_UP, seg.dir);
+        const back = seg.dir.clone().sub(prevDir); back.sub(seg.dir.clone().multiplyScalar(back.dot(seg.dir)));
+        if (back.lengthSq() > 1e-10){
+          const localBack = back.normalize().applyQuaternion(seg.mesh.quaternion.clone().invert());
+          seg.mesh.rotateY(Math.atan2(localBack.x, localBack.z));
+        }
+      }
+      seg.hpBar.position.copy(seg.dir).multiplyScalar(R * 1.02 + BSEG_R + 0.08);
+      seg.aura.visible = seg.ball;
+      if (seg.ball){
+        seg.aura.position.copy(seg.dir).multiplyScalar(R * 1.02);
+        const s = BSEG_R * 5.2 * pulse; seg.aura.scale.set(s, s, 1);
+      }
+      // cord to the link in front
+      cord.visible = prevAlive;
+      if (prevAlive){
+        const a = prevDir.clone().multiplyScalar(R * 1.02), b = seg.dir.clone().multiplyScalar(R * 1.02);
+        const mid = a.clone().add(b).multiplyScalar(0.5);
+        const len = a.distanceTo(b);
+        cord.position.copy(mid);
+        cord.scale.set(1, Math.max(0.001, len), 1);
+        cord.quaternion.setFromUnitVectors(MOB_UP, b.sub(a).normalize());
+      }
+      prevDir = seg.dir; prevAlive = true;
+    }
+  }
+  // Kill link k and everything behind it.
+  function killBSegsFrom(ch, k){
+    for (let j = k; j < BSEG_COUNT; j++){
+      const seg = ch.bsegs[j];
+      if (!seg.alive) continue;
+      seg.alive = false; seg.ball = false; seg.hp = 0;
+      showBSeg(seg, false);
+    }
+  }
+  function damageBSeg(seg, dmg){
+    if (!seg.alive) return;
+    spawnFloatingNumber(seg.dir, BSEG_R, dmg, '#ff3030');
+    seg.hp = Math.max(0, seg.hp - dmg);
+    updateHPBarSprite(seg.hpBar, seg.hp / seg.maxHp);
+    if (seg.hp <= 0) killBSegsFrom(seg.owner, seg.k);
+  }
+  // Every alive B link that can be hit, for enemy targeting.
+  function aliveBSegs(){
+    const out = [];
+    for (const ch of characters) if (ch.bsegs) for (const s of ch.bsegs) if (s.alive) out.push(s);
+    return out;
+  }
+  // Cached for a few ms: this is asked for by every mob every frame, and
+  // rebuilding the list each time made a lot of garbage (= stutter).
+  let _charTargetsCache = null, _charTargetsAt = -1;
+  function charTargets(){
+    const now = performance.now();
+    if (_charTargetsCache && now - _charTargetsAt < 12) return _charTargetsCache;
+    const segs = aliveBSegs();
+    _charTargetsCache = segs.length ? characters.concat(segs) : characters;
+    _charTargetsAt = now;
+    return _charTargetsCache;
+  }
+
+  // ---- ball visuals (host and player 2) ----
+  const bBalls = []; // { mesh, from, to, t, dur, arc, onLand }
+  function spawnBBall(team, from, to, dur, arc, onLand){
+    const mesh = new THREE.Mesh(bBallGeo, bBallMats[team === 1 ? 1 : 0]);
+    sphereGroup.add(mesh);
+    bBalls.push({ mesh, from: from.clone().normalize(), to: to.clone().normalize(), t: 0, dur, arc, onLand: onLand || null });
+  }
+  const bBlasts = []; // { mesh, t, dur, radius }
+  function spawnBBlastVisual(dir, radius, team){
+    const mesh = new THREE.Mesh(new THREE.SphereGeometry(1, 20, 14), new THREE.MeshBasicMaterial({ color: team === 1 ? 0x4080ff : 0xff3a1a, transparent: true, opacity: 0.6, depthWrite: false }));
+    mesh.position.copy(dir).multiplyScalar(R * 1.01);
+    sphereGroup.add(mesh);
+    bBlasts.push({ mesh, t: 0, dur: 0.45, size: R * Math.sin(radius) });
+  }
+  function updateBVisuals(dt){
+    for (let i = bBalls.length - 1; i >= 0; i--){
+      const b = bBalls[i];
+      b.t += dt;
+      const k = Math.min(1, b.t / b.dur);
+      const d = slerpVec(b.from, b.to, k).normalize();
+      b.mesh.position.copy(d).multiplyScalar(R * 1.04 + Math.sin(Math.PI * k) * b.arc);
+      if (k >= 1){
+        sphereGroup.remove(b.mesh);
+        bBalls.splice(i, 1);
+        if (b.onLand && simRunning()) b.onLand(b.to);
+      }
+    }
+    for (let i = bBlasts.length - 1; i >= 0; i--){
+      const x = bBlasts[i];
+      x.t += dt;
+      const k = Math.min(1, x.t / x.dur);
+      x.mesh.scale.setScalar(x.size * (0.3 + 0.7 * k));
+      x.mesh.material.opacity = 0.6 * (1 - k);
+      if (k >= 1){ sphereGroup.remove(x.mesh); x.mesh.geometry.dispose(); x.mesh.material.dispose(); bBlasts.splice(i, 1); }
+    }
+  }
+  // Relay hand-off (short hop between links) — host plays it and tells player 2.
+  function bRelayVisual(team, from, to){
+    spawnBBall(team, from, to, 0.35, 0.08);
+    netPushEvent('j' + enc1(team) + encDir(from) + encDir(to));
+  }
+  function bBlastAt(team, dir){
+    spawnBBlastVisual(dir, B_BLAST_RADIUS, team);
+    netPushEvent('k' + enc1(team) + encDir(dir));
+    const e = 1 - team;
+    for (const x of charTargets()){
+      if (x.alive && x.team === e && angleBetween(x.dir, dir) <= B_BLAST_RADIUS){
+        damageCharacter(x, B_BLAST_DMG_MIN + Math.random() * (B_BLAST_DMG_MAX - B_BLAST_DMG_MIN));
+      }
+    }
+    const foes = teamMobs(e);
+    for (const m of foes.slice()){
+      if (foes.indexOf(m) === -1) continue;
+      if (angleBetween(m.dir, dir) <= B_BLAST_RADIUS + mobVisualRadius(m) / R){
+        damageMobInList(foes, m, B_BLAST_DMG_MIN + Math.random() * (B_BLAST_DMG_MAX - B_BLAST_DMG_MIN));
+      }
+    }
+    // Neutral mobs caught in the blast take it too.
+    for (const m of neutralMobs.slice()){
+      if (neutralMobs.indexOf(m) === -1) continue;
+      if (angleBetween(m.dir, dir) <= B_BLAST_RADIUS + mobVisualRadius(m) / R){
+        damageMobInList(neutralMobs, m, B_BLAST_DMG_MIN + Math.random() * (B_BLAST_DMG_MAX - B_BLAST_DMG_MIN));
+      }
+    }
+  }
+  function bFindTarget(ch){
+    const e = 1 - ch.team;
+    let best = null, bestD = Infinity;
+    for (const m of teamMobs(e)){ const d = angleBetween(ch.dir, m.dir); if (d <= B_ATTACK_RANGE && d < bestD){ bestD = d; best = m; } }
+    for (const m of neutralMobs){ const d = angleBetween(ch.dir, m.dir); if (d <= B_ATTACK_RANGE && d < bestD){ bestD = d; best = m; } } // neutral mobs too
+    for (const x of charTargets()){
+      if (!x.alive || x.team !== e) continue;
+      const d = angleBetween(ch.dir, x.dir);
+      if (d <= B_ATTACK_RANGE && d < bestD){ bestD = d; best = x; }
+    }
+    return best;
+  }
+
+  // Host: runs the chain each frame.
+  function updateReloader(ch, dt, now){
+    ensureBChain(ch);
+    if (!ch.bInit && ch.alive){
+      // Kick-off: the whole chain is there from the start.
+      ch.bInit = true; ch.bWasAlive = true;
+      resetBHistory(ch);
+      for (const seg of ch.bsegs){ seg.alive = true; seg.hp = seg.maxHp; seg.ball = false; updateHPBarSprite(seg.hpBar, 1); showBSeg(seg, true); }
+      ch.bRelayAt = now + B_RELAY_MS;
+    }
+    if (!ch.alive){
+      killBSegsFrom(ch, 0);
+      ch.bBall = false;
+      ch.bWasAlive = false;
+      layoutBChain(ch);
+      return;
+    }
+    if (!ch.bWasAlive){
+      // (re)spawned: the chain grows back from the front, one link per 10 s
+      ch.bWasAlive = true;
+      resetBHistory(ch);
+      ch.bRelayAt = now + B_RELAY_MS;
+    }
+    pushBHistory(ch);
+    // Revive: the first missing link comes back after BSEG_REVIVE_MS.
+    const firstDead = ch.bsegs.findIndex(s => !s.alive);
+    if (firstDead !== -1){
+      const seg = ch.bsegs[firstDead];
+      if (!seg.reviveAt) seg.reviveAt = now + BSEG_REVIVE_MS;
+      else if (now >= seg.reviveAt){
+        seg.reviveAt = 0;
+        seg.alive = true; seg.hp = seg.maxHp; seg.ball = false;
+        updateHPBarSprite(seg.hpBar, 1);
+        showBSeg(seg, true);
+      }
+    }
+    for (let k = 0; k < BSEG_COUNT; k++) if (ch.bsegs[k].alive && k !== firstDead) ch.bsegs[k].reviveAt = 0;
+    layoutBChain(ch);
+    // Tail on red ground: a new ball forms there.
+    const tail = ch.bsegs[BSEG_COUNT - 1];
+    if (tail.alive && !tail.ball && territoryGrid[dirToGridIdx(tail.dir)] === RED_OF[ch.team]) tail.ball = true;
+    // The relay: every B_RELAY_MS, everyone hands forward at once — B1
+    // throws at an enemy if it holds a ball and one is in range, and every
+    // link whose front neighbour is (now) empty passes its ball forward.
+    // It only stalls when it's jammed: every link holds a ball and B1 has
+    // nobody to throw at. The moment B1 throws, it all moves again at once
+    // and the 3 s rhythm restarts from there.
+    const target = ch.bBall ? bFindTarget(ch) : null;
+    if (now >= ch.bRelayAt || (ch.bJammed && target)){
+      if (ch.bBall && target){
+        ch.bBall = false;
+        const from = ch.dir.clone(), to = target.dir.clone();
+        const dist = angleBetween(from, to);
+        const team = ch.team;
+        spawnBBall(team, from, to, 0.45 + dist * 1.5, 0.2 + dist * 1.2, (d) => bBlastAt(team, d));
+        netPushEvent('j' + enc1(team) + encDir(from) + encDir(to));
+      }
+      const holders = [ch].concat(ch.bsegs);
+      const hasBall = (n) => n === ch ? ch.bBall : n.ball;
+      const setBall = (n, v) => { if (n === ch) ch.bBall = v; else n.ball = v; };
+      for (let k = 1; k < holders.length; k++){
+        const cur = holders[k], front = holders[k - 1];
+        if (!cur.alive || !front.alive) break;
+        if (hasBall(cur) && !hasBall(front)){
+          setBall(cur, false); setBall(front, true);
+          bRelayVisual(ch.team, cur.dir, front.dir);
+        }
+      }
+      // The tail refills straight away if it's still on red ground.
+      if (tail.alive && !tail.ball && territoryGrid[dirToGridIdx(tail.dir)] === RED_OF[ch.team]) tail.ball = true;
+      // Jammed = every living link (and B1) is holding a ball.
+      ch.bJammed = holders.every(n => !n.alive || hasBall(n));
+      ch.bRelayAt = now + B_RELAY_MS;
+    }
+  }
+  // Player 2's page: positions follow the (smoothed) head; state comes from snapshots.
+  function guestLayoutB(ch){
+    ensureBChain(ch);
+    if (ch.alive) pushBHistory(ch);
+    layoutBChain(ch);
+  }
+  function encodeBState(ch){
+    if (!ch || !ch.bsegs) return '';
+    let s = enc1(ch.bBall ? 1 : 0);
+    for (const seg of ch.bsegs) s += enc1(seg.alive ? 1 + Math.round(Math.max(0, seg.hp) / seg.maxHp * 60) : 0) + enc1(seg.ball ? 1 : 0);
+    return s;
+  }
+  function applyBState(ch, s){
+    if (!ch || typeof s !== 'string' || s.length < 1 + BSEG_COUNT * 2) return;
+    ensureBChain(ch);
+    ch.bBall = dec1(s, 0) === 1;
+    for (let k = 0; k < BSEG_COUNT; k++){
+      const seg = ch.bsegs[k];
+      const v = dec1(s, 1 + k * 2);
+      const alive = v > 0;
+      if (alive !== seg.alive){ seg.alive = alive; showBSeg(seg, alive); }
+      if (alive){ seg.hp = (v - 1) / 60 * seg.maxHp; updateHPBarSprite(seg.hpBar, (v - 1) / 60); }
+      seg.ball = alive && dec1(s, 2 + k * 2) === 1;
+    }
+  }
 
   const _headingDelta = new THREE.Vector3();
   function updateCharacterAbilities(dt, now){
-    // Track each character's last walking direction.
+    // Track each character's last walking direction (B needs it to know
+    // what's "in front").
     for (const ch of characters){
       if (!ch._prevDir){ ch._prevDir = ch.dir.clone(); continue; }
       _headingDelta.copy(ch.dir).sub(ch._prevDir);
@@ -4322,10 +5481,25 @@ window.createPeerRoom = function(roomCode){
       }
       ch._prevDir.copy(ch.dir);
     }
+    for (let t = 0; t < 2; t++){
+      const farmer = charOf(t, 'A');
+      if (farmer) updateFarmer(farmer, dt, now);
+    }
+    updateCrops(dt);
+    updateWatermelonThrows(dt);
+    for (let t = 0; t < 2; t++){
+      const reloader = charOf(t, 'B');
+      if (reloader) updateReloader(reloader, dt, now); // (the old ✕-mark ability is retired)
+    }
     updateTunnelWarps();
     for (let t = 0; t < 2; t++){
       const wolf = charOf(t, 'C');
       if (wolf) updateWerewolfEars(wolf);
+    }
+    if (farmDirty && now - lastFarmRebuildAt > 250){
+      rebuildFarmOutline();
+      farmDirty = false;
+      lastFarmRebuildAt = now;
     }
   }
 
@@ -5008,6 +6182,44 @@ window.createPeerRoom = function(roomCode){
     return mob.dir.clone(); // boxed in on all sides — hold position
   }
 
+  // ---------- light pillar effect (strong skill card "光の柱") ----------
+  const pillarEffects = [];
+  const PILLAR_COLORS = [0x4da6ff, 0xff4d4d, 0xffe14d, 0x4dff88]; // blue, red, yellow, green
+  function spawnLightPillarEffect(localDir, damage, onSettle, visualColorIdx){
+    const visualOnly = visualColorIdx !== undefined;
+    if (!visualOnly) damageEntitiesNear(localDir, 0.12, damage);
+    const worldPos = sphereGroup.localToWorld(localDir.clone().multiplyScalar(R));
+    const dirN = worldPos.clone().normalize();
+    const geo = new THREE.CylinderGeometry(0.05, 0.1, 1.5, 14, 1, true);
+    const colorIdx = visualOnly ? visualColorIdx : Math.floor(Math.random() * PILLAR_COLORS.length);
+    const color = PILLAR_COLORS[colorIdx] || PILLAR_COLORS[0];
+    if (!visualOnly) netPushEvent('p' + encDir(localDir) + enc1(colorIdx));
+    const mat = new THREE.MeshBasicMaterial({
+      color, transparent: true, opacity: 0.85, side: THREE.DoubleSide,
+      blending: THREE.AdditiveBlending, depthWrite: false
+    });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.position.copy(worldPos).add(dirN.clone().multiplyScalar(0.55));
+    mesh.quaternion.setFromUnitVectors(MOB_UP, dirN);
+    scene.add(mesh);
+    pillarEffects.push({ mesh, t: 0, duration: 0.5 });
+    if (onSettle) setTimeout(onSettle, 480);
+  }
+  function updatePillarEffects(dt){
+    for (let i = pillarEffects.length - 1; i >= 0; i--){
+      const fx = pillarEffects[i];
+      fx.t += dt;
+      const p = Math.min(fx.t / fx.duration, 1);
+      fx.mesh.material.opacity = 0.85 * (1 - p);
+      fx.mesh.scale.set(1 + p * 0.35, 1, 1 + p * 0.35);
+      if (p >= 1){
+        scene.remove(fx.mesh);
+        fx.mesh.geometry.dispose(); fx.mesh.material.dispose();
+        pillarEffects.splice(i, 1);
+      }
+    }
+  }
+
   // ---------- geometry helpers (angular / great-circle) ----------
   function angleBetween(a, b){
     return Math.acos(THREE.MathUtils.clamp(a.dot(b), -1, 1));
@@ -5101,7 +6313,15 @@ window.createPeerRoom = function(roomCode){
   const MIN_POINT_DIST_PX = 6;
   const MIN_PATH_ANGULAR = 0.05;
   let ANGULAR_SPEED = 0.2 * Math.PI / 180; // now edited directly via the settings menu
-  // ---- per-character abilities (C: werewolf) ----
+  // ---- per-character abilities (A: farmer, B: tunneler, C: werewolf) ----
+  let CROP_GROW_COUNT = 30;      // a seed is ripe once its growth count reaches this
+  let CROP_DAY_RATE = 3.0;       // count gained per second on the day side (30 / 3 = 10s)
+  let CROP_NIGHT_RATE = 1.0;     // count gained per second on the night side (30 / 1 = 30s)
+  let CROP_RADIUS = 3 * Math.PI / 180;       // each planted seed claims a circle this size; seeds never overlap
+  let WATERMELON_MAX_STOCK = 10;
+  let WATERMELON_THROW_RANGE = 10 * Math.PI / 180;
+  let WATERMELON_THROW_INTERVAL_MS = 1000;
+  let WATERMELON_HEAL = 50;
   let MAX_TUNNEL_MARKS = 3; // how many ✕ marks may exist at once
   let HOLE_RADIUS = 3 * Math.PI / 180; // the ✕ mark's size and the range that triggers a warp
   // How squarely B's route must cut across its own earlier line to count as
@@ -5114,10 +6334,57 @@ window.createPeerRoom = function(roomCode){
   const PATH_CROSS_SELF_SKIP_ARC = 0.12;
   let WEREWOLF_SPEED_MULT = 2;
   let WEREWOLF_DAMAGE_MULT = 2;
+  let GIANT_METEOR_DAMAGE = 360;
+  let LIGHT_PILLAR_DAMAGE = 150;
+  let LIGHT_PILLAR_COUNT = 6; // lasers per use, spread evenly along the drawn line
 
   // ---------- settings menu: every gameplay number, grouped and editable ----------
   const RAD2DEG = 180 / Math.PI, DEG2RAD = Math.PI / 180;
   const SETTINGS_SECTIONS = [
+    { title: 'A 農家の能力(赤い点・青い点共通)', items: [
+      { label: 'スイカが育つカウント', get: () => CROP_GROW_COUNT, set: v => { CROP_GROW_COUNT = v; }, step: 1, min: 1 },
+      { label: 'カウントの進み(昼)', unit: '倍', get: () => CROP_DAY_RATE, set: v => { CROP_DAY_RATE = v; }, step: 0.1, min: 0 },
+      { label: 'カウントの進み(夜)', unit: '倍', get: () => CROP_NIGHT_RATE, set: v => { CROP_NIGHT_RATE = v; }, step: 0.1, min: 0 },
+      { label: '作物の種の半径', unit: '°', get: () => CROP_RADIUS * RAD2DEG, set: v => { CROP_RADIUS = v * DEG2RAD; }, step: 0.5, min: 0.5 },
+      { label: 'スイカ最大ストック', unit: '個', get: () => WATERMELON_MAX_STOCK, set: v => { WATERMELON_MAX_STOCK = Math.max(1, Math.round(v)); }, step: 1, min: 1 },
+      { label: 'スイカを投げる範囲', unit: '°', get: () => WATERMELON_THROW_RANGE * RAD2DEG, set: v => { WATERMELON_THROW_RANGE = v * DEG2RAD; }, step: 0.5, min: 0.5 },
+      { label: 'スイカを投げる頻度', unit: '秒', get: () => WATERMELON_THROW_INTERVAL_MS / 1000, set: v => { WATERMELON_THROW_INTERVAL_MS = v * 1000; }, step: 0.1, min: 0.1 },
+      { label: 'スイカの回復量', get: () => WATERMELON_HEAL, set: v => { WATERMELON_HEAL = v; }, step: 10, min: 0 },
+      { label: '虹色スイカの出現率', unit: '%', get: () => RAINBOW_MELON_CHANCE * 100, set: v => { RAINBOW_MELON_CHANCE = v / 100; }, step: 0.5, min: 0, max: 100 },
+      { label: '虹色スイカの回復量', get: () => RAINBOW_MELON_HEAL, set: v => { RAINBOW_MELON_HEAL = v; }, step: 10, min: 0 },
+      { label: '虹色スイカを投げる相手(減ったHPがこれ以上)', get: () => RAINBOW_MELON_MISSING, set: v => { RAINBOW_MELON_MISSING = v; }, step: 5, min: 0 },
+      { label: 'スイカを投げる相手(減ったHPがこれ以上)', get: () => WATERMELON_HEAL_MISSING, set: v => { WATERMELON_HEAL_MISSING = v; }, step: 5, min: 0 },
+    ]},
+    { title: '畑陣地・ファーマーモブ', items: [
+      { label: '畑陣地のファーマー出現率', unit: '%', get: () => FARM_FARMER_CHANCE * 100, set: v => { FARM_FARMER_CHANCE = v / 100; }, step: 1, min: 0, max: 100 },
+      { label: '畑陣地のゴールド(シルバー)出現率', unit: '%', get: () => FARM_GOLD_CHANCE * 100, set: v => { FARM_GOLD_CHANCE = v / 100; }, step: 0.5, min: 0, max: 100 },
+      { label: 'ファーマーHP', get: () => FARMER_MOB_HP, set: v => { FARMER_MOB_HP = v; }, step: 5, min: 1 },
+      { label: 'ファーマー移動速度', unit: '°/f', get: () => FARMER_MOB_SPEED * RAD2DEG, set: v => { FARMER_MOB_SPEED = v * DEG2RAD; }, step: 0.01, min: 0 },
+      { label: 'ファーマー感知範囲', unit: '°', get: () => FARMER_MOB_SENSE * RAD2DEG, set: v => { FARMER_MOB_SENSE = v * DEG2RAD; }, step: 0.5, min: 0.5 },
+      { label: 'ファーマーのスイカ投げ頻度', unit: '秒', get: () => FARMER_MOB_THROW_MS / 1000, set: v => { FARMER_MOB_THROW_MS = v * 1000; }, step: 0.1, min: 0.1 },
+      { label: 'ファーマー重さ', get: () => FARMER_MOB_MASS, set: v => { FARMER_MOB_MASS = v; }, step: 0.5, min: 0.1 },
+      { label: 'ファーマー最大ストック', unit: '個', get: () => FARMER_MAX_STOCK, set: v => { FARMER_MAX_STOCK = Math.max(1, Math.round(v)); }, step: 1, min: 1 },
+    ]},
+    { title: 'カカシモブ', items: [
+      { label: 'HP', get: () => SCARECROW_HP, set: v => { SCARECROW_HP = v; }, step: 5, min: 1 },
+      { label: '移動速度', unit: '°/f', get: () => SCARECROW_SPEED * RAD2DEG, set: v => { SCARECROW_SPEED = v * DEG2RAD; }, step: 0.01, min: 0 },
+      { label: '範囲攻撃力(最小)', get: () => SCARECROW_DMG_MIN, set: v => { SCARECROW_DMG_MIN = v; }, step: 1, min: 0 },
+      { label: '範囲攻撃力(最大)', get: () => SCARECROW_DMG_MAX, set: v => { SCARECROW_DMG_MAX = v; }, step: 1, min: 0 },
+      { label: '攻撃頻度', unit: '秒', get: () => SCARECROW_COOLDOWN_MS / 1000, set: v => { SCARECROW_COOLDOWN_MS = v * 1000; }, step: 0.1, min: 0.1 },
+      { label: '攻撃範囲', unit: '°', get: () => SCARECROW_RANGE * RAD2DEG, set: v => { SCARECROW_RANGE = v * DEG2RAD; }, step: 0.5, min: 0.5 },
+      { label: 'スイカ植え頻度', unit: '秒', get: () => SCARECROW_PLANT_MS / 1000, set: v => { SCARECROW_PLANT_MS = v * 1000; }, step: 0.1, min: 0.1 },
+      { label: '重さ', get: () => SCARECROW_MASS, set: v => { SCARECROW_MASS = v; }, step: 0.5, min: 0.1 },
+      { label: '畑にいる間のHP回復', unit: '/秒', get: () => SCARECROW_FARM_REGEN, set: v => { SCARECROW_FARM_REGEN = v; }, step: 0.5, min: 0 },
+    ]},
+    { title: 'B リロードの能力(共通)', items: [
+      { label: 'B2〜尻尾のHP', get: () => BSEG_HP, set: v => { BSEG_HP = v; }, step: 10, min: 1 },
+      { label: '1つ復活するまでの時間', unit: '秒', get: () => BSEG_REVIVE_MS / 1000, set: v => { BSEG_REVIVE_MS = v * 1000; }, step: 0.5, min: 0.5 },
+      { label: '赤い球を渡す間隔(攻撃頻度)', unit: '秒', get: () => B_RELAY_MS / 1000, set: v => { B_RELAY_MS = v * 1000; }, step: 0.1, min: 0.1 },
+      { label: 'B1の攻撃範囲', unit: '°', get: () => B_ATTACK_RANGE * RAD2DEG, set: v => { B_ATTACK_RANGE = v * DEG2RAD; }, step: 0.5, min: 0.5 },
+      { label: '球の爆発範囲', unit: '°', get: () => B_BLAST_RADIUS * RAD2DEG, set: v => { B_BLAST_RADIUS = v * DEG2RAD; }, step: 0.5, min: 0.5 },
+      { label: '爆発ダメージ(最小)', get: () => B_BLAST_DMG_MIN, set: v => { B_BLAST_DMG_MIN = v; }, step: 1, min: 0 },
+      { label: '爆発ダメージ(最大)', get: () => B_BLAST_DMG_MAX, set: v => { B_BLAST_DMG_MAX = v; }, step: 1, min: 0 },
+    ]},
     { title: '赤い色(青い色)の陣地', items: [
       { label: 'ビッグ出現率', unit: '%', get: () => RED_BIG_CHANCE * 100, set: v => { RED_BIG_CHANCE = v / 100; }, step: 1, min: 0, max: 100 },
       { label: 'ゴールド(シルバー)出現率', unit: '%', get: () => RED_GOLD_CHANCE * 100, set: v => { RED_GOLD_CHANCE = v / 100; }, step: 1, min: 0, max: 100 },
@@ -5214,7 +6481,11 @@ window.createPeerRoom = function(roomCode){
       { label: '攻撃/侵食範囲', unit: '°', get: () => GRAY_MOB_RANGE * RAD2DEG, set: v => { GRAY_MOB_RANGE = v * DEG2RAD; }, step: 0.5, min: 0.5 },
       { label: '索敵範囲', unit: '°', get: () => GRAY_MOB_ATTACK_SEARCH_RANGE * RAD2DEG, set: v => { GRAY_MOB_ATTACK_SEARCH_RANGE = v * DEG2RAD; }, step: 0.5, min: 0.5 },
     ]},
-    { title: '月のかけら・月のクレーター', items: [
+    { title: '月の隕石・月のかけら', items: [
+      { label: '着弾範囲(陣地消去・ダメージ)', unit: '°', get: () => MOON_METEOR_CLEAR * RAD2DEG, set: v => { MOON_METEOR_CLEAR = v * DEG2RAD; }, step: 0.5, min: 0.5 },
+      { label: '着弾ダメージ', get: () => MOON_METEOR_DAMAGE, set: v => { MOON_METEOR_DAMAGE = v; }, step: 10, min: 0 },
+      { label: '吹き飛ばし(最小)', unit: '°', get: () => MOON_METEOR_KNOCKBACK_MIN * RAD2DEG, set: v => { MOON_METEOR_KNOCKBACK_MIN = v * DEG2RAD; }, step: 0.1, min: 0 },
+      { label: '吹き飛ばし(最大)', unit: '°', get: () => MOON_METEOR_KNOCKBACK_MAX * RAD2DEG, set: v => { MOON_METEOR_KNOCKBACK_MAX = v * DEG2RAD; }, step: 0.1, min: 0 },
       { label: 'クレーター半径', unit: '°', get: () => MOON_CRATER_RADIUS * RAD2DEG, set: v => { MOON_CRATER_RADIUS = v * DEG2RAD; }, step: 0.5, min: 0.5 },
       { label: '味方グレーモブ出現率(納品1回あたり)', unit: '%', get: () => MOON_FRAGMENT_GRAY_MOB_BASE_CHANCE * 100, set: v => { MOON_FRAGMENT_GRAY_MOB_BASE_CHANCE = v / 100; }, step: 0.5, min: 0, max: 100 },
     ]},
@@ -5252,6 +6523,16 @@ window.createPeerRoom = function(roomCode){
       { label: '精霊結晶1つあたりの出現数', unit: '体', get: () => CRYSTAL_GREEN_MOB_COUNT, set: v => { CRYSTAL_GREEN_MOB_COUNT = Math.max(0, Math.round(v)); }, step: 1, min: 0, max: 5 },
       { label: '重さ', get: () => GREEN_MOB_MASS, set: v => { GREEN_MOB_MASS = v; }, step: 0.5, min: 0.1 },
     ]},
+    { title: '毒の雨・毒溜まり・猛毒溜まり', items: [
+      { label: '毒の雨の継続時間', unit: '秒', get: () => POISON_RAIN_DURATION_MS / 1000, set: v => { POISON_RAIN_DURATION_MS = v * 1000; }, step: 1, min: 1 },
+      { label: '雨粒の間隔(最短)', unit: '秒', get: () => POISON_RAIN_INTERVAL_MIN_MS / 1000, set: v => { POISON_RAIN_INTERVAL_MIN_MS = v * 1000; }, step: 0.1, min: 0.1 },
+      { label: '雨粒の間隔(最長)', unit: '秒', get: () => POISON_RAIN_INTERVAL_MAX_MS / 1000, set: v => { POISON_RAIN_INTERVAL_MAX_MS = v * 1000; }, step: 0.1, min: 0.1 },
+      { label: '毒溜まり半径(最小)', unit: '°', get: () => POISON_POOL_RADIUS_MIN * RAD2DEG, set: v => { POISON_POOL_RADIUS_MIN = v * DEG2RAD; }, step: 0.5, min: 0.5 },
+      { label: '毒溜まり半径(最大)', unit: '°', get: () => POISON_POOL_RADIUS_MAX * RAD2DEG, set: v => { POISON_POOL_RADIUS_MAX = v * DEG2RAD; }, step: 0.5, min: 0.5 },
+      { label: '毒溜まり消失', unit: '秒', get: () => POISON_POOL_LIFETIME_MS / 1000, set: v => { POISON_POOL_LIFETIME_MS = v * 1000; }, step: 0.5, min: 0.5 },
+      { label: '猛毒溜まり半径', unit: '°', get: () => TOXIC_POOL_RADIUS * RAD2DEG, set: v => { TOXIC_POOL_RADIUS = v * DEG2RAD; }, step: 0.5, min: 0.5 },
+      { label: '猛毒溜まり消失', unit: '秒', get: () => TOXIC_POOL_LIFETIME_MS / 1000, set: v => { TOXIC_POOL_LIFETIME_MS = v * 1000; }, step: 0.5, min: 0.5 },
+    ]},
     { title: '毒状態・猛毒状態・毒液', items: [
       { label: '毒のダメージ', unit: '/秒', get: () => POISON_DPS, set: v => { POISON_DPS = v; }, step: 1, min: 0 },
       { label: '毒の持続', unit: '秒', get: () => POISON_DURATION_MS / 1000, set: v => { POISON_DURATION_MS = v * 1000; }, step: 1, min: 1 },
@@ -5279,8 +6560,11 @@ window.createPeerRoom = function(roomCode){
       { label: '隕石クレーター半径', unit: '°', get: () => METEOR_CRATER_RADIUS * RAD2DEG, set: v => { METEOR_CRATER_RADIUS = v * DEG2RAD; }, step: 0.5, min: 1 },
       { label: '精霊結晶半径', unit: '°', get: () => CRYSTAL_ZONE_RADIUS * RAD2DEG, set: v => { CRYSTAL_ZONE_RADIUS = v * DEG2RAD; }, step: 0.5, min: 1 },
     ]},
-    { title: '隕石', items: [
+    { title: '隕石・アビリティ', items: [
       { label: '陣地消去半径', unit: '°', get: () => METEOR_CLEAR_ANGULAR * RAD2DEG, set: v => { METEOR_CLEAR_ANGULAR = v * DEG2RAD; }, step: 0.5, min: 1 },
+      { label: '巨大隕石ダメージ', get: () => GIANT_METEOR_DAMAGE, set: v => { GIANT_METEOR_DAMAGE = v; }, step: 10, min: 0 },
+      { label: '光の柱ダメージ', get: () => LIGHT_PILLAR_DAMAGE, set: v => { LIGHT_PILLAR_DAMAGE = v; }, step: 5, min: 0 },
+      { label: '光の柱の本数', unit: '本', get: () => LIGHT_PILLAR_COUNT, set: v => { LIGHT_PILLAR_COUNT = Math.max(1, Math.round(v)); }, step: 1, min: 1, max: 8 },
     ]},
   ];
   function roundForDisplay(v){ return Math.round(v * 10000) / 10000; }
@@ -5642,6 +6926,263 @@ window.createPeerRoom = function(roomCode){
     });
   }
 
+  // ---------- ability line targeting + card execution ----------
+  let abilityMode = false;      // sliders panel vs ability panel
+  let abilityDrawing = false;   // currently dragging out the targeting line
+  let abilityDrawPath = [];     // grid vertices
+  let abilityDrawDense = [];    // dense Vector3 points (visual + geometry)
+  let abilityDrawScreenPts = [];
+  let abilityLineMesh = null;
+  const ABILITY_LINE_COLOR = 0xbfefff;
+
+  function setAbilityPathTube(points){
+    if (abilityLineMesh){ sphereGroup.remove(abilityLineMesh); abilityLineMesh.geometry.dispose(); abilityLineMesh = null; }
+    if (!points || points.length < 2) return;
+    const scaled = points.map(p => p.clone().multiplyScalar(R * 1.017));
+    const curve = new THREE.CatmullRomCurve3(scaled, false, 'catmullrom', 0.35);
+    const tubularSegments = Math.max(12, scaled.length * 6);
+    const geo = new THREE.TubeGeometry(curve, tubularSegments, PATH_TUBE_RADIUS * 0.9, 8, false);
+    const mat = new THREE.MeshBasicMaterial({ color: ABILITY_LINE_COLOR, transparent: true, opacity: 0.9 });
+    abilityLineMesh = new THREE.Mesh(geo, mat);
+    sphereGroup.add(abilityLineMesh);
+  }
+  function clearAbilityLine(){
+    abilityDrawPath = []; abilityDrawDense = [];
+    setAbilityPathTube(null);
+  }
+
+  // The interior of whatever loop the drawn ability line closes, using the
+  // same "wall vs. components" approach the territory-enclosure fill uses.
+  function getAbilityEnclosedCells(ptsIn){
+    const pts = ptsIn || abilityDrawDense;
+    if (pts.length < 2) return null;
+    const wall = new Set();
+    for (const pt of pts) forEachCellInBrush(pt, BRUSH_ANGULAR, idx => wall.add(idx));
+    if (wall.size === 0) return null;
+    const components = computeGridComponents(wall);
+    if (components.length < 2) return null; // line never closed a loop
+    components.sort((a, b) => b.weight - a.weight);
+    const outside = components[0];
+    const totalWeight = components.reduce((s, c) => s + c.weight, 0);
+    if (outside.weight < totalWeight * 0.5) return null;
+    const cells = [];
+    for (let i = 1; i < components.length; i++) for (const idx of components[i].cells) cells.push(idx);
+    return cells.length ? cells : null;
+  }
+
+  // Strong-card cooldowns: each one's cooldown length matches how long the
+  // landmark it creates lasts, so the card is usable again right as the
+  // last thing it made expires.
+  // Per team: when each strong card was last fired (host clock).
+  // Strong cards can now be used only once per team per match.
+  const cardUsed = [{ giant_meteor: false, light_pillar: false, poison_rain: false }, { giant_meteor: false, light_pillar: false, poison_rain: false }];
+  function teamCardUsed(team, cardId){ return !!cardUsed[team][cardId]; }
+  // What this screen's own cards show: the host knows its own state;
+  // player 2 goes by the host's latest report.
+  function strongCardUsed(cardId){
+    if (myTeam === -1) return false;
+    if (isSimHost()) return teamCardUsed(myTeam, cardId);
+    return netCardUsed(cardId);
+  }
+  const cooldownDisplayEls = {
+    giant_meteor: { card: document.getElementById('card_giant_meteor'), label: document.getElementById('cooldown_giant_meteor') },
+    light_pillar: { card: document.getElementById('card_light_pillar'), label: document.getElementById('cooldown_light_pillar') },
+    poison_rain: { card: document.getElementById('card_poison_rain'), label: document.getElementById('cooldown_poison_rain') }
+  };
+  function updateCardCooldownDisplays(now){
+    for (const cardId in cooldownDisplayEls){
+      const { card, label } = cooldownDisplayEls[cardId];
+      if (strongCardUsed(cardId)){
+        card.classList.add('onCooldown');
+        label.textContent = '使用済み';
+      } else {
+        card.classList.remove('onCooldown');
+        label.textContent = '';
+      }
+    }
+  }
+
+  // Host-side effects of the two strong cards, for either team.
+  function fireGiantMeteor(team, centroid){
+    const now = performance.now();
+    if (teamCardUsed(team, 'giant_meteor')) return;
+    cardUsed[team].giant_meteor = true;
+    launchMeteor(centroid, dirToUV(centroid), {
+      damage: GIANT_METEOR_DAMAGE,
+      sizeMult: 3,       // unchanged: damage radius / territory-clear radius
+      visualMult: 3 * 3, // 3x bigger-looking again, on top of the existing 3x
+      onLanded: (dir) => {
+        const lm = spawnLandmark('meteor_mountain', dir);
+        // Black mobs appear only here, once, all at the same moment.
+        for (let k = 0; k < CRATER_BLACK_MOB_COUNT; k++) spawnNeutralMob('black', lm);
+      }
+    });
+  }
+  // ---------- small meteors from the moon ----------
+  let moonMeteorTimes = [];
+  let moonMeteorNext = 0;
+  function scheduleMoonMeteors(){
+    moonMeteorTimes = [];
+    for (let i = 0; i < MOON_METEOR_COUNT; i++){
+      moonMeteorTimes.push(MOON_METEOR_WINDOW_MS[0] + Math.random() * (MOON_METEOR_WINDOW_MS[1] - MOON_METEOR_WINDOW_MS[0]));
+    }
+    moonMeteorTimes.sort((a, b) => a - b);
+    moonMeteorNext = 0;
+  }
+  function updateMoonMeteors(){
+    const el = gameElapsedMs();
+    while (moonMeteorNext < moonMeteorTimes.length && el >= moonMeteorTimes[moonMeteorNext]){
+      moonMeteorNext++;
+      launchMoonMeteor();
+    }
+  }
+  // Somewhere nobody owns: an unclaimed cell whose whole impact circle is
+  // (ideally) unclaimed too. Sampled uniformly over the globe's surface.
+  function pickMoonLandingDir(){
+    let best = null, bestBad = Infinity;
+    for (let k = 0; k < 80 && bestBad > 0; k++){
+      const idx = dirToGridIdx(randomSphereDir());
+      if (territoryGrid[idx] !== EMPTY || landmarkCellSet.has(idx)) continue;
+      const d = cellIdxToDir(idx);
+      let bad = 0;
+      forEachCellInBrush(d, MOON_METEOR_CLEAR, (c) => { if (territoryGrid[c] !== EMPTY || landmarkCellSet.has(c)) bad++; });
+      if (bad < bestBad){ best = d; bestBad = bad; }
+    }
+    if (!best){
+      const idx = randomCellOfColor(c => c === EMPTY);
+      best = idx !== null ? cellIdxToDir(idx) : randomSphereDir();
+    }
+    return best;
+  }
+  function launchMoonMeteor(){
+    const d = pickMoonLandingDir();
+    moonMesh.updateMatrixWorld();
+    launchMeteor(d, dirToUV(d), {
+      startWorld: moonMesh.position.clone(),
+      sizeMult: 1, visualMult: 0.8, duration: 1.3,
+      clearRadius: MOON_METEOR_CLEAR,
+      onLanded: moonMeteorLanded
+    });
+  }
+  function moonMeteorLanded(dir){
+    const r = MOON_METEOR_CLEAR;
+    const hit = [];
+    for (let t = 0; t < 2; t++) for (const m of teamMobs(t)) if (angleBetween(m.dir, dir) <= r) hit.push([m, teamMobs(t)]);
+    for (const m of neutralMobs) if (angleBetween(m.dir, dir) <= r) hit.push([m, neutralMobs]);
+    damageEntitiesNear(dir, r, MOON_METEOR_DAMAGE);
+    // Survivors are flung outward from the impact, like the gray mob's blast.
+    for (const [m, list] of hit){
+      if (list.indexOf(m) === -1) continue;
+      applyKnockback(m, dir, MOON_METEOR_KNOCKBACK_MIN + Math.random() * (MOON_METEOR_KNOCKBACK_MAX - MOON_METEOR_KNOCKBACK_MIN));
+    }
+    const lm = spawnLandmark('moon_crater', dir);
+    // Exactly one gray guardian per crater; it vanishes with the crater.
+    spawnNeutralMob('gray', lm);
+  }
+
+  function fireLightPillar(team, targetCells){
+    const now = performance.now();
+    if (teamCardUsed(team, 'light_pillar')) return;
+    if (!targetCells || targetCells.length === 0) return;
+    cardUsed[team].light_pillar = true;
+    // Cells arrive in order from the start of the drawn line to its end,
+    // so the lasers fall along it in that order.
+    targetCells.forEach((idx, i) => {
+      setTimeout(() => {
+        if (!simRunning()) return;
+        const dir = cellIdxToDir(idx);
+        // Every laser leaves its own diamond zone, and each new spirit
+        // crystal brings exactly one green mob with it (only then, once).
+        spawnLightPillarEffect(dir, LIGHT_PILLAR_DAMAGE, () => {
+          if (!simRunning()) return;
+          const lm = spawnLandmark('spirit_crystal', dir);
+          for (let k = 0; k < CRYSTAL_GREEN_MOB_COUNT; k++) spawnNeutralMob('green', lm);
+        });
+      }, i * 160);
+    });
+  }
+
+  // This screen's own card use: work out the target from the drawn loop,
+  // then hand it to the host (or apply it directly when this is the host).
+  // 毒の雨: needs a closed loop, like the giant meteor. The loop's outline
+  // travels to the host, which works out the enclosed ground itself.
+  function usePoisonRain(){
+    const cells = getAbilityEnclosedCells();
+    if (cells) netAction({ type: 'rain', path: abilityDrawDense.slice() });
+    clearAbilityLine();
+  }
+  function useGiantMeteor(){
+    const cells = getAbilityEnclosedCells();
+    if (cells){
+      const centroid = new THREE.Vector3();
+      for (const idx of cells) centroid.add(cellIdxToDir(idx));
+      centroid.normalize();
+      netAction({ type: 'giant', dir: centroid });
+    }
+    clearAbilityLine();
+  }
+
+  // Lasers fall ON the drawn line: LIGHT_PILLAR_COUNT of them, evenly
+  // spaced, the first exactly at the line's start and the last exactly at
+  // its end. Spacing = length / (count - 1), so it scales with the line
+  // automatically (6 lasers: length 10 -> 2 apart, length 30 -> 6 apart).
+  function useLightPillar(){
+    const pts = abilityDrawDense;
+    if (pts.length >= 2){
+      const cum = buildAngularCum(pts);
+      const total = cum[cum.length - 1] || 0;
+      if (total > 0){
+        const n = Math.max(1, Math.round(LIGHT_PILLAR_COUNT));
+        const targets = [];
+        for (let i = 0; i < n; i++){
+          const dist = n === 1 ? total / 2 : total * i / (n - 1);
+          const d = pointAtAngularDistance(pts, cum, dist);
+          targets.push(dirToGridIdx(d));
+        }
+        netAction({ type: 'pillar', cells: targets });
+      }
+    }
+    clearAbilityLine();
+  }
+
+  // ---------- arm -> draw -> release-to-fire ----------
+  // Swiping a card up doesn't fire it immediately: it "arms" that ability
+  // and hands control of the next sphere drag over to targeting. Lifting
+  // the finger fires the armed ability with whatever was just drawn (or
+  // does nothing, for a card that needed an enclosed loop and didn't get
+  // one) and disarms.
+  let armedCardId = null;
+  const armedCardBadge = document.getElementById('armedCardBadge');
+  const CARD_LABELS = {
+    giant_meteor: '巨大隕石', light_pillar: '光の柱', poison_rain: '毒の雨'
+  };
+  function armCard(id){
+    armedCardId = id;
+    if (armedCardBadge){
+      armedCardBadge.textContent = CARD_LABELS[id] + ' 〉なぞって発動(タップ / カードを下にスワイプで解除)';
+      armedCardBadge.classList.remove('hidden');
+      armedCardBadge.style.pointerEvents = 'auto';
+    }
+  }
+  function disarmCard(){
+    armedCardId = null;
+    if (armedCardBadge){
+      armedCardBadge.classList.add('hidden');
+      armedCardBadge.style.pointerEvents = 'none';
+    }
+  }
+  if (armedCardBadge){
+    armedCardBadge.addEventListener('click', () => { disarmCard(); clearAbilityLine(); abilityDrawing = false; });
+  }
+  function executeArmedCard(){
+    const id = armedCardId;
+    disarmCard();
+    if (id === 'giant_meteor') useGiantMeteor();
+    else if (id === 'light_pillar') useLightPillar();
+    else if (id === 'poison_rain') usePoisonRain();
+    else clearAbilityLine();
+  }
+
   // ---------- spawn-rate info panel: read-only, shows the current pink /
   // dark-pink spawn breakdown so it's easy to check what the settings menu
   // numbers actually add up to. ----------
@@ -5703,12 +7244,36 @@ window.createPeerRoom = function(roomCode){
       darkRows.push(['ブラックモブ(次の納品時)', fmt(meteorNextPct)]);
     }
     const light = team === 0 ? 'ピンク' : '水色';
-    makeGroup('レベル1の陣地', plainRows);
-    makeGroup('レベル2の陣地', darkRows);
-    makeGroup('レベル3の陣地', [
+    makeGroup('通常の' + light + '陣地から', plainRows);
+    makeGroup('濃い' + light + '陣地から', darkRows);
+    const moonNowPct = Math.min(100, MOON_FRAGMENT_GRAY_MOB_BASE_CHANCE * 100 * moonCount);
+    const moonNextPct = Math.min(100, MOON_FRAGMENT_GRAY_MOB_BASE_CHANCE * 100 * (moonCount + 1));
+    makeGroup('月のかけら(どちらの' + light + '陣地にも納品可)', moonCount > 0 ? [
+      ['味方グレーモブ(現在の確率・納品' + moonCount + '個)', fmt(moonNowPct)],
+      ['味方グレーモブ(次の納品時)', fmt(moonNextPct)]
+    ] : [
+      ['味方グレーモブ(未納品)', '0%'],
+      ['味方グレーモブ(1個目の納品時)', fmt(moonNextPct)]
+    ]);
+    makeGroup('畑陣地(' + (team === 0 ? 'ピンク' : '水色') + ')', [
+      [team === 0 ? 'ピンクモブ' : 'ブルーモブ', fmt(Math.max(0, 100 - FARM_FARMER_CHANCE * 100 - FARM_GOLD_CHANCE * 100))],
+      ['ファーマーモブ', fmt(FARM_FARMER_CHANCE * 100)],
+      [team === 0 ? 'ゴールドモブ' : 'シルバーモブ', fmt(FARM_GOLD_CHANCE * 100)],
+    ]);
+    makeGroup((team === 0 ? '赤い色' : '青い色') + 'の陣地', [
       [team === 0 ? 'ピンクモブ' : 'ブルーモブ', fmt(Math.max(0, 100 - RED_BIG_CHANCE * 100 - RED_GOLD_CHANCE * 100))],
       [team === 0 ? 'ビッグピンクモブ' : 'ビッグブルーモブ', fmt(RED_BIG_CHANCE * 100)],
       [team === 0 ? 'ゴールドモブ' : 'シルバーモブ', fmt(RED_GOLD_CHANCE * 100)],
+    ]);
+    const liquidCount = counts[3] || 0;
+    const liquidNowPct = Math.min(100, POISON_LIQUID_PURPLE_BASE_CHANCE * 100 * liquidCount);
+    const liquidNextPct = Math.min(100, POISON_LIQUID_PURPLE_BASE_CHANCE * 100 * (liquidCount + 1));
+    makeGroup('毒液(どちらの' + light + '陣地にも納品可)', liquidCount > 0 ? [
+      ['味方パープルモブ(現在の確率・納品' + liquidCount + '回)', fmt(liquidNowPct)],
+      ['味方パープルモブ(次の納品時)', fmt(liquidNextPct)]
+    ] : [
+      ['味方パープルモブ(未納品)', '0%'],
+      ['味方パープルモブ(1回目の納品時)', fmt(liquidNextPct)]
     ]);
   }
   function fragmentCountsFor(team){
@@ -5716,31 +7281,95 @@ window.createPeerRoom = function(roomCode){
     return netFragmentCounts();
   }
 
-  // ---------- panel toggle (settings <-> spawn-rate info) ----------
+  // ---------- panel toggle (settings <-> ability cards <-> spawn-rate info) ----------
   const settingsPanelEl = document.getElementById('settingsPanel');
+  const abilityPanelEl = document.getElementById('abilityPanel');
   const spawnInfoPanelEl = document.getElementById('spawnInfoPanel');
   const tabSlidersEl = document.getElementById('tabSliders');
+  const tabAbilitiesEl = document.getElementById('tabAbilities');
   const tabSpawnInfoEl = document.getElementById('tabSpawnInfo');
-  let activePanel = 'settings'; // 'settings' | 'spawnInfo'
+  let activePanel = 'settings'; // 'settings' | 'ability' | 'spawnInfo'
   function setActivePanel(panel){
+    const wasAbility = activePanel === 'ability';
     activePanel = panel;
+    abilityMode = panel === 'ability'; // kept for anything still reading this flag
     settingsPanelEl.classList.toggle('hidden', panel !== 'settings');
+    abilityPanelEl.classList.toggle('hidden', panel !== 'ability');
     spawnInfoPanelEl.classList.toggle('hidden', panel !== 'spawnInfo');
     tabSlidersEl.classList.toggle('active', panel === 'settings');
+    tabAbilitiesEl.classList.toggle('active', panel === 'ability');
     tabSpawnInfoEl.classList.toggle('active', panel === 'spawnInfo');
+    if (wasAbility && panel !== 'ability') clearAbilityLine();
     if (panel === 'spawnInfo') buildSpawnInfoPanel();
   }
-  const panelCollapseBtnEl = document.getElementById('panelCollapseBtn');
-  function setPanelsCollapsed(on){
-    bottomPanelsEl.classList.toggle('collapsed', on);
-    panelCollapseBtnEl.textContent = on ? '▲ 開く' : '▼ しまう';
-    panelCollapseBtnEl.setAttribute('aria-label', on ? 'パネルを開く' : 'パネルをしまう');
-  }
-  panelCollapseBtnEl.addEventListener('click', () => setPanelsCollapsed(!bottomPanelsEl.classList.contains('collapsed')));
-  tabSlidersEl.addEventListener('click', () => { setPanelsCollapsed(false); });
-  tabSpawnInfoEl.addEventListener('click', () => { setPanelsCollapsed(false); });
   tabSlidersEl.addEventListener('click', () => setActivePanel('settings'));
+  tabAbilitiesEl.addEventListener('click', () => setActivePanel('ability'));
   tabSpawnInfoEl.addEventListener('click', () => setActivePanel('spawnInfo'));
+
+  // ---------- card swipe-up gesture ----------
+  function setupCardSwipe(cardEl, cardId, onActivate){
+    let startY = null, dragging = false, activePointerId = null;
+    const threshold = 55;
+    cardEl.style.touchAction = 'none';
+    function down(e){
+      if (dragging) return;
+      startY = e.clientY; dragging = true; activePointerId = e.pointerId;
+      cardEl.style.transition = 'none';
+      if (cardEl.setPointerCapture){
+        try { cardEl.setPointerCapture(e.pointerId); } catch(err){}
+      }
+    }
+    function move(e){
+      if (!dragging || e.pointerId !== activePointerId) return;
+      const dy = e.clientY - startY;
+      if (dy < 0) cardEl.style.transform = `translateY(${dy}px)`;
+      else if (armedCardId) cardEl.style.transform = `translateY(${Math.min(dy, 60)}px)`; // pull down to cancel
+    }
+    function up(e){
+      if (!dragging || e.pointerId !== activePointerId) return;
+      dragging = false; activePointerId = null;
+      const dy = e.clientY - startY;
+      cardEl.style.transition = 'transform 0.2s ease, opacity 0.2s ease';
+      if (dy > threshold && armedCardId){
+        // Swiped down while a card is armed: cancel it (the card isn't used).
+        disarmCard();
+        clearAbilityLine();
+        abilityDrawing = false;
+        cardEl.style.transform = '';
+        return;
+      }
+      if (dy < -threshold && strongCardUsed(cardId)){
+        // Already used this match — snap back without arming.
+        cardEl.style.transform = '';
+        return;
+      }
+      if (dy < -threshold){
+        // Arm immediately — the fly-away below is cosmetic only. Gating
+        // the actual activation behind that animation's timeout meant a
+        // fast real swipe-then-drag could start dragging the sphere
+        // before the card had actually armed, so the drag fell through
+        // to plain rotation instead of targeting.
+        onActivate();
+        cardEl.style.transform = 'translateY(-160px)';
+        cardEl.style.opacity = '0';
+        setTimeout(() => {
+          cardEl.style.transition = 'none';
+          cardEl.style.transform = '';
+          cardEl.style.opacity = '';
+          requestAnimationFrame(() => { cardEl.style.transition = 'transform 0.2s ease, opacity 0.2s ease'; });
+        }, 180);
+      } else {
+        cardEl.style.transform = '';
+      }
+    }
+    cardEl.addEventListener('pointerdown', down);
+    cardEl.addEventListener('pointermove', move);
+    cardEl.addEventListener('pointerup', up);
+    cardEl.addEventListener('pointercancel', up);
+  }
+  setupCardSwipe(document.getElementById('card_giant_meteor'), 'giant_meteor', () => armCard('giant_meteor'));
+  setupCardSwipe(document.getElementById('card_light_pillar'), 'light_pillar', () => armCard('light_pillar'));
+  setupCardSwipe(document.getElementById('card_poison_rain'), 'poison_rain', () => armCard('poison_rain'));
 
   function hideHint(){
     if (hintShown){ hintShown = false; hintEl.style.opacity = '0'; }
@@ -5773,6 +7402,24 @@ window.createPeerRoom = function(roomCode){
     const p = getPos(evt);
 
     const canPlay = myTeam !== -1 && NET.phase === 'playing';
+    if (armedCardId && !canPlay) disarmCard();
+    if (armedCardId){
+      const worldPt = raycastSpherePoint(p.x, p.y);
+      if (!worldPt){
+        // Missed the sphere entirely — don't leave the card armed forever;
+        // that would silently swallow every touch afterward (including
+        // taps meant to move a character), since this branch runs before
+        // any other input handling.
+        disarmCard();
+        return;
+      }
+      const localDir = sphereGroup.worldToLocal(worldPt.clone()).normalize();
+      abilityDrawDense = [localDir.clone()];
+      abilityDrawScreenPts = [p];
+      setAbilityPathTube(abilityDrawDense);
+      abilityDrawing = true;
+      return;
+    }
 
     for (const ch of characters){
       if (!canPlay || ch.team !== myTeam) continue; // only your own dots answer to you
@@ -5848,6 +7495,16 @@ window.createPeerRoom = function(roomCode){
       const localDir = sphereGroup.worldToLocal(worldPt.clone()).normalize();
       drawingLocalPts.push(localDir);
       setCharPathTube(drawingChar, drawingLocalPts);
+    } else if (abilityDrawing){
+      evt.preventDefault();
+      const last = abilityDrawScreenPts[abilityDrawScreenPts.length - 1];
+      if (dist2D(p, last) < MIN_POINT_DIST_PX) return;
+      const worldPt = raycastSpherePoint(p.x, p.y);
+      if (!worldPt) return;
+      abilityDrawScreenPts.push(p);
+      const localDir = sphereGroup.worldToLocal(worldPt.clone()).normalize();
+      abilityDrawDense.push(localDir);
+      setAbilityPathTube(abilityDrawDense);
     } else if (isRotating && lastPointer){
       evt.preventDefault();
       const dx = p.x - lastPointer.x, dy = p.y - lastPointer.y;
@@ -5876,6 +7533,11 @@ window.createPeerRoom = function(roomCode){
       }
       drawingScreenPts = []; drawingLocalPts = []; drawingGridPath = [];
       drawingChar = null;
+    } else if (abilityDrawing){
+      evt.preventDefault();
+      abilityDrawing = false;
+      abilityDrawScreenPts = [];
+      executeArmedCard();
     } else if (tapCandidate){
       // A quick tap on empty ground no longer drops a meteor — that's now
       // only available via the long-press radial menu.
@@ -6131,7 +7793,7 @@ window.createPeerRoom = function(roomCode){
   //  11 times a second, publishes a compact snapshot of the board in its
   //  room presence. Player 2 (and anyone watching) draws that snapshot and
   //  sends its own commands back through its presence. Everything travels
-  //  as short base-64 strings to fit the 4 KB presence budget.
+  //  as short base-64 strings (originally sized for a 4 KB presence budget).
   // =====================================================================
   const B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
   const B64I = {};
@@ -6209,6 +7871,7 @@ window.createPeerRoom = function(roomCode){
     }
     nextBlackMobSpawnAt = now + NEUTRAL_SPAWN_MIN_MS + Math.random() * (NEUTRAL_SPAWN_MAX_MS - NEUTRAL_SPAWN_MIN_MS);
     nextGreenMobSpawnAt = now + NEUTRAL_SPAWN_MIN_MS + Math.random() * (NEUTRAL_SPAWN_MAX_MS - NEUTRAL_SPAWN_MIN_MS);
+    scheduleMoonMeteors();
     focusCameraOn(charOf(myTeam === 1 ? 1 : 0, 'A'));
     renderLobby();
   }
@@ -6218,6 +7881,8 @@ window.createPeerRoom = function(roomCode){
     computeScoresNow();
     NET.winner = scoreFrac[0] > scoreFrac[1] ? 0 : (scoreFrac[1] > scoreFrac[0] ? 1 : 2);
     drawingChar = null;
+    disarmCard();
+    clearAbilityLine();
     renderLobby();
   }
   function requestRematch(){
@@ -6243,7 +7908,7 @@ window.createPeerRoom = function(roomCode){
   }
 
   // ---------- host: building a snapshot ----------
-  NET.budget = 9000;
+  NET.budget = 3700;
   NET.snapCount = 0;
   NET.rowCursor = 0;
   NET.lastSendAt = 0;
@@ -6255,7 +7920,10 @@ window.createPeerRoom = function(roomCode){
     };
     for (let gx = 0; gx < GRID_W; gx++){
       const idx = gy * GRID_W + gx;
-      const v = territoryGrid[idx];
+      let v = territoryGrid[idx];
+      if (farmCells.has(idx)){
+        if (v === DARK_PINK) v = 8; else if (v === DARK_CYAN) v = 9;
+      }
       if (v === prev) run++;
       else { flush(); prev = v; run = 1; }
     }
@@ -6264,6 +7932,8 @@ window.createPeerRoom = function(roomCode){
   }
   function mobTypeCode(m, t){
     if (m.isPurple) return 17 + t; // 17 = pink purple, 18 = blue purple
+    if (m.isFarmer) return 19 + t;
+    if (m.isScarecrow) return 21 + t;
     const kind = m.isAlliedGray ? 6 : m.isBoss ? 5 : m.isAlliedBlack ? 3 : m.isAlliedGreen ? 4 : m.isGold ? 2 : m.isBig ? 1 : 0;
     return t * 7 + kind;
   }
@@ -6274,14 +7944,16 @@ window.createPeerRoom = function(roomCode){
       sc: [Math.round(scoreFrac[0] * 1000), Math.round(scoreFrac[1] * 1000)],
       w: NET.winner === null ? -1 : NET.winner,
       mc: meteorImpactCount,
-      fc: [meteorFragmentDeliveryCount[1], crystalFragmentDeliveryCount[1], moonFragmentDeliveryCount[1], poisonLiquidDeliveryCount[1]]
+      cd: [teamCardUsed(1, 'giant_meteor') ? 1 : 0, teamCardUsed(1, 'light_pillar') ? 1 : 0, teamCardUsed(1, 'poison_rain') ? 1 : 0],
+      fc: [meteorFragmentDeliveryCount[1], crystalFragmentDeliveryCount[1], moonFragmentDeliveryCount[1], poisonLiquidDeliveryCount[1]],
+      bs: [encodeBState(charOf(0, 'B')), encodeBState(charOf(1, 'B'))]
     };
     let c = '';
     const pa = ['', '', ''];
     for (const ch of characters){
       const flags = (ch.alive ? 1 : 0) | (ch.moving ? 2 : 0) | (ch.carryingFragment === 'meteor' ? 4 : 0) | (ch.carryingFragment === 'crystal' ? 8 : 0) | (ch.carryingFragment === 'moon' ? 16 : 0) | (ch.poisonLiquid ? 32 : 0);
       const frac = ch.moving && ch.totalAngular > 0 ? Math.min(1, ch.traveledAngular / ch.totalAngular) : 0;
-      c += encDir(ch.dir) + enc2(Math.round(Math.max(0, ch.hp) / ch.maxHp * 4095)) + enc1(flags)
+      c += encDir(ch.dir) + enc2(Math.round(Math.max(0, ch.hp) / ch.maxHp * 4095)) + enc1(flags) + enc1(ch.watermelons || 0)
         + enc1(ch.trailEpoch || 0) + enc1(ch.pathVer || 0) + enc2(Math.round(frac * 4095));
       if (ch.team === 1 && ch.moving && ch.routePts){
         pa['ABC'.indexOf(ch.role)] = ch.routePts.map(encDir).join('');
@@ -6322,6 +7994,20 @@ window.createPeerRoom = function(roomCode){
     o.eq = evs.length ? evs[0].q : netEvSeq + 1;
     o.ev = evs.map(e => e.s);
     size += 20;
+    // Watermelon crops, a few times a second.
+    if (NET.snapCount % 4 === 0 || NET.cropsDue){
+      const cr = [];
+      let cc = '', k = 0;
+      for (const crop of crops){
+        if (k >= 320) break;
+        cc += encDir(crop.dir) + enc1(crop.ripe ? 63 : Math.min(62, Math.round(crop.progress * 63))) + enc1((crop.team || 0) | (crop.rainbow ? 2 : 0));
+        if (++k % 160 === 0){ cr.push(cc); cc = ''; }
+      }
+      if (cc) cr.push(cc);
+      const len = cr.reduce((a, s) => a + s.length + 3, 8);
+      if (size + len < budget - 400){ o.cr = cr; size += len; NET.cropsDue = false; }
+      else NET.cropsDue = true;
+    }
     // Host-side settings, every few seconds.
     if (NET.snapCount % 40 === 1){
       const st = settingsArray();
@@ -6456,6 +8142,9 @@ window.createPeerRoom = function(roomCode){
       case 'route': if (ch) commitFreeRoute(ch, a.path); break;
       case 'send': if (ch) sendCharacterTo(ch, a.dir); break;
       case 'meteor': launchMeteor(a.dir, dirToUV(a.dir)); break;
+      case 'giant': fireGiantMeteor(team, a.dir); break;
+      case 'pillar': fireLightPillar(team, a.cells); break;
+      case 'rain': firePoisonRain(team, a.path); break;
     }
   }
   function encodeAction(a){
@@ -6466,6 +8155,9 @@ window.createPeerRoom = function(roomCode){
       }
       case 'send': return 'D' + a.role + encDir(a.dir);
       case 'meteor': return 'M' + encDir(a.dir);
+      case 'giant': return 'G' + encDir(a.dir);
+      case 'pillar': return 'P' + a.cells.map(enc3).join('');
+      case 'rain': return 'Q' + simplifyRoute(a.path, 60).map(encDir).join('');
     }
     return null;
   }
@@ -6481,7 +8173,20 @@ window.createPeerRoom = function(roomCode){
       return path.length ? { type: 'route', role: s[1], path } : null;
     }
     if (k === 'D') return roleOk(s[1]) && s.length >= 6 ? { type: 'send', role: s[1], dir: decDir(s, 2) } : null;
-    if (k === 'M' && s.length >= 5) return { type: 'meteor', dir: decDir(s, 1) };
+    if ((k === 'M' || k === 'G') && s.length >= 5) return { type: k === 'M' ? 'meteor' : 'giant', dir: decDir(s, 1) };
+    if (k === 'Q'){
+      const path = [];
+      for (let i = 1; i + 4 <= s.length; i += 4) path.push(decDir(s, i));
+      return path.length >= 3 ? { type: 'rain', path } : null;
+    }
+    if (k === 'P'){
+      const cells = [];
+      for (let i = 1; i + 2 < s.length + 0 && i + 3 <= s.length; i += 3){
+        const idx = dec3(s, i);
+        if (idx < GRID_W * GRID_H) cells.push(idx);
+      }
+      return cells.length ? { type: 'pillar', cells: cells.slice(0, 8) } : null;
+    }
     return null;
   }
   NET.lastCmdSeq = 0;
@@ -6521,6 +8226,11 @@ window.createPeerRoom = function(roomCode){
     if (NET.phase === 'ended') return NET.lastT || MATCH_MS;
     return 0;
   }
+  function netCardUsed(cardId){
+    const cd = NET.netCd;
+    if (!cd || myTeam !== 1) return false;
+    return !!(cardId === 'giant_meteor' ? cd[0] : cardId === 'light_pillar' ? cd[1] : cd[2]);
+  }
   function netFragmentCounts(){ return NET.netFc || [0, 0, 0, 0]; }
 
   function applySnapshot(o){
@@ -6539,6 +8249,7 @@ window.createPeerRoom = function(roomCode){
     NET.lastRecvAt = now;
     NET.netScores = Array.isArray(o.sc) ? o.sc : null;
     NET.winner = o.w === 0 || o.w === 1 || o.w === 2 ? o.w : null;
+    NET.netCd = Array.isArray(o.cd) ? o.cd : null;
     NET.netFc = Array.isArray(o.fc) ? o.fc : null;
     if (typeof o.mc === 'number' && meteorCountEl){ meteorImpactCount = o.mc; meteorCountEl.textContent = o.mc; }
     if (Array.isArray(o.st)) applySettingsArray(o.st);
@@ -6546,6 +8257,8 @@ window.createPeerRoom = function(roomCode){
     if (Array.isArray(o.mb)) applyNetMobs(o.mb);
     if (typeof o.lm === 'string') applyNetLandmarks(o.lm);
     if (typeof o.ho === 'string') applyNetHoles(o.ho);
+    if (Array.isArray(o.cr)) applyNetCrops(o.cr);
+    if (Array.isArray(o.bs)){ applyBState(charOf(0, 'B'), o.bs[0]); applyBState(charOf(1, 'B'), o.bs[1]); }
     if (Array.isArray(o.tr)) for (const r of o.tr) if (typeof r === 'string') applyNetTerrRow(r);
     applyNetEvents(o.eq, o.ev);
     if (myTeam >= 0 && (NET.needFocus || (prevPhase === 'lobby' && NET.phase === 'playing'))){
@@ -6553,7 +8266,7 @@ window.createPeerRoom = function(roomCode){
       focusCameraOn(charOf(myTeam, 'A'));
     }
     if (prevPhase !== NET.phase){
-      if (NET.phase !== 'playing'){ drawingChar = null; }
+      if (NET.phase !== 'playing'){ drawingChar = null; disarmCard(); }
       renderLobby();
     }
   }
@@ -6563,14 +8276,15 @@ window.createPeerRoom = function(roomCode){
     const now = performance.now();
     for (let i = 0; i < characters.length; i++){
       const ch = characters[i];
-      const b = i * 11;
-      if (c.length < b + 11) break;
+      const b = i * 12;
+      if (c.length < b + 12) break;
       const d = decDir(c, b, new THREE.Vector3());
       const hpF = dec2(c, b + 4) / 4095;
       const flags = dec1(c, b + 6);
-      const ep = dec1(c, b + 7);
-      const pv = dec1(c, b + 8);
-      const tf = dec2(c, b + 9) / 4095;
+      const melons = dec1(c, b + 7);
+      const ep = dec1(c, b + 8);
+      const pv = dec1(c, b + 9);
+      const tf = dec2(c, b + 10) / 4095;
       const alive = !!(flags & 1), moving = !!(flags & 2);
       const carry = (flags & 4) ? 'meteor' : (flags & 8) ? 'crystal' : (flags & 16) ? 'moon' : null;
       if (!ch.netTarget){ ch.netTarget = d.clone(); placeCharacterAt(ch, d); }
@@ -6595,6 +8309,11 @@ window.createPeerRoom = function(roomCode){
       if (wantLiquid !== !!ch.poisonLiquid){
         ch.poisonLiquid = wantLiquid;
         if (wantLiquid) attachLiquidMesh(ch); else detachLiquidMesh(ch);
+      }
+      ch.watermelons = melons;
+      if (ch.role === 'A'){
+        if (!ch.stockLabel){ ch.stockLabel = makeStockLabelSprite(); sphereGroup.add(ch.stockLabel); }
+        refreshStockLabel(ch);
       }
       if (moving !== ch.moving || ep !== ch.netEpoch){
         if (ch.gTrail && ch.gTrail.size){ ch.gTrail.clear(); NET.glowRebuild = true; }
@@ -6647,7 +8366,15 @@ window.createPeerRoom = function(roomCode){
   function makeReplicaMob(type){
     let mesh, ringColor, range, vr, hpBar = null;
     const addHpBar = () => { hpBar = makeHPBarSprite(); updateHPBarSprite(hpBar, 1); sphereGroup.add(hpBar); };
-    if (type === 17 || type === 18){
+    if (type === 19 || type === 20){
+      const t = type - 19;
+      mesh = makeFarmerMobMesh(t);
+      ringColor = t === 0 ? 0xff5a9e : 0x5ad0ff; range = FARMER_MOB_SENSE; vr = MOB_LOCAL_R;
+    } else if (type === 21 || type === 22){
+      const t = type - 21;
+      mesh = makeScarecrowMesh(t);
+      ringColor = t === 0 ? 0xff5a9e : 0x5ad0ff; range = SCARECROW_RANGE; vr = MOB_LOCAL_R * SCARECROW_SIZE_MULT;
+    } else if (type === 17 || type === 18){
       const t = type - 17;
       mesh = makePurpleMobMesh(t);
       ringColor = t === 0 ? 0xff5a9e : 0x5ad0ff; range = PURPLE_MOB_RANGE; vr = MOB_LOCAL_R * BIG_MOB_SIZE_MULT;
@@ -6794,13 +8521,33 @@ window.createPeerRoom = function(roomCode){
       if (!seen.has(id)){ sphereGroup.remove(h.mesh); netHoles.delete(id); }
     }
   }
+  const netCropMeshes = [];
+  function applyNetCrops(chunks){
+    let n = 0;
+    const d = new THREE.Vector3();
+    for (const str of chunks){
+      if (typeof str !== 'string') continue;
+      for (let i = 0; i + 6 <= str.length; i += 6){
+        decDir(str, i, d);
+        const prog = dec1(str, i + 4) / 63;
+        let m = netCropMeshes[n];
+        if (!m){ m = new THREE.Mesh(watermelonGeo, watermelonMat); sphereGroup.add(m); netCropMeshes.push(m); }
+        m.visible = true;
+        m.quaternion.setFromUnitVectors(ABILITY_UP, d);
+        applyCropLook(m, d, prog >= 1, !!(dec1(str, i + 5) & 2));
+        n++;
+      }
+    }
+    for (let k = n; k < netCropMeshes.length; k++) netCropMeshes[k].visible = false;
+  }
   function applyNetTerrRow(r){
     const gy = dec2(r, 0);
     if (gy >= GRID_H) return;
     let x = 0;
     for (let i = 2; i + 1 < r.length && x < GRID_W; i += 2){
       const v = dec1(r, i), len = dec1(r, i + 1);
-      const real = v;
+      const farm = v === 8 || v === 9;
+      const real = v === 8 ? DARK_PINK : (v === 9 ? DARK_CYAN : v);
       // Anything the host can paint: 0..7, poison pools (10, 11) and the
       // level-3 red / navy ground (12, 13). (This used to stop at 7, which
       // silently dropped the rest of any row containing level-3 ground or
@@ -6809,9 +8556,12 @@ window.createPeerRoom = function(roomCode){
       for (let k = 0; k < len && x < GRID_W; k++, x++){
         const idx = gy * GRID_W + x;
         setCellRaw(idx, real);
+        if (farm){ if (!farmCells.has(idx)){ farmCells.add(idx); farmDirty = true; } }
+        else if (farmCells.delete(idx)) farmDirty = true;
       }
     }
   }
+  const netMelons = [];
   function applyNetEvents(eq, ev){
     if (!Array.isArray(ev) || typeof eq !== 'number') return;
     if (NET.lastEv === undefined){ NET.lastEv = eq + ev.length - 1; return; }
@@ -6834,12 +8584,26 @@ window.createPeerRoom = function(roomCode){
     } else if (k === 'n' && s.length >= 6){
       const d = decDir(s, 1);
       launchMeteor(d, dirToUV(d), { startWorld: moonMesh.position.clone(), sizeMult: 1, visualMult: 0.8, duration: (dec1(s, 5) / 20) || 1.3, visualOnly: true });
+    } else if (k === 'j' && s.length >= 10){
+      const team = dec1(s, 1), from = decDir(s, 2), to = decDir(s, 6);
+      const dist = angleBetween(from, to);
+      if (dist < 0.16) spawnBBall(team, from, to, 0.35, 0.08);
+      else spawnBBall(team, from, to, 0.45 + dist * 1.5, 0.2 + dist * 1.2);
+    } else if (k === 'k' && s.length >= 6){
+      spawnBBlastVisual(decDir(s, 2), B_BLAST_RADIUS, dec1(s, 1));
     } else if (k === 'r' && s.length >= 5){
       spawnPoisonDropVisual(decDir(s, 1), null);
     } else if (k === 'v' && s.length >= 9){
       spawnPoisonOrbVisual(decDir(s, 1), decDir(s, 5), null);
+    } else if (k === 'p' && s.length >= 6){
+      spawnLightPillarEffect(decDir(s, 1), 0, null, dec1(s, 5));
     } else if (k === 'l' && s.length >= 9){
       spawnGreenLaser(decDir(s, 1), decDir(s, 5), true);
+    } else if (k === 'w' && s.length >= 9){
+      const mesh = new THREE.Mesh(watermelonGeo, s[9] === '1' ? rainbowMelonMat : watermelonMat);
+      mesh.scale.setScalar(R * CROP_RADIUS * 0.6);
+      sphereGroup.add(mesh);
+      netMelons.push({ mesh, from: decDir(s, 1), to: decDir(s, 5), t: 0 });
     }
   }
 
@@ -6855,6 +8619,7 @@ window.createPeerRoom = function(roomCode){
       }
       if (ch.fragmentMesh) ch.fragmentMesh.position.copy(ch.dir).multiplyScalar(R * 1.02 + FRAGMENT_HEIGHT_OFFSET);
       placeLiquidMesh(ch);
+      if (ch.stockLabel) ch.stockLabel.position.copy(ch.dir).multiplyScalar(R * 1.02 + CHAR_LOCAL_R + 0.38);
       if (ch.moving){
         if (!ch.gTrail) ch.gTrail = new Set();
         const rgb = glowRgbForRole(ch.role);
@@ -6867,7 +8632,9 @@ window.createPeerRoom = function(roomCode){
       }
     }
     for (const ch of characters){
+      if (ch.stockLabel && !ch.alive) ch.stockLabel.visible = false;
       if (ch.role === 'C') updateWerewolfEars(ch);
+      if (ch.role === 'B') guestLayoutB(ch);
     }
     if (NET.glowRebuild){
       NET.glowRebuild = false;
@@ -6889,9 +8656,23 @@ window.createPeerRoom = function(roomCode){
       }
       r.mesh.position.copy(r.dir).multiplyScalar(R * 1.02 + hop);
       r.mesh.quaternion.setFromUnitVectors(MOB_UP, r.dir);
-      if (r.spinT > 0){ r.spinT -= dt; applyMobSpin(r.mesh, Math.max(0, r.spinT)); }
+      if (r.spinT > 0){ r.spinT -= dt; applyMobSpin(r.mesh, Math.max(0, r.spinT), (r.type === 21 || r.type === 22) ? MOB_UP : undefined); }
       updateAuraRingTransform(r.auraRing, r.dir, r.range);
       if (r.hpBar) r.hpBar.position.copy(r.dir).multiplyScalar(R * 1.02 + r.vr + 0.12);
+    }
+    for (let i = netMelons.length - 1; i >= 0; i--){
+      const w = netMelons[i];
+      w.t += dt;
+      const p = Math.min(1, w.t / 0.45);
+      const d = slerpVec(w.from, w.to, p).normalize();
+      w.mesh.position.copy(d).multiplyScalar(R * 1.04 + Math.sin(Math.PI * p) * 0.35);
+      w.mesh.rotation.x += dt * 10;
+      if (p >= 1){ sphereGroup.remove(w.mesh); netMelons.splice(i, 1); }
+    }
+    if (farmDirty && now - lastFarmRebuildAt > 250){
+      rebuildFarmOutline();
+      farmDirty = false;
+      lastFarmRebuildAt = now;
     }
   }
 
@@ -6979,7 +8760,7 @@ window.createPeerRoom = function(roomCode){
   function applySeatUi(){
     const host = isSimHost();
     tabSlidersEl.classList.toggle('hidden', !host);
-    if (!host && activePanel === 'settings') setActivePanel('spawnInfo');
+    if (!host && activePanel === 'settings') setActivePanel('ability');
     bottomPanelsEl.classList.toggle('hidden', myTeam === -1);
     // Route lines follow whose side you're on.
     for (const ch of characters){
@@ -7011,10 +8792,9 @@ window.createPeerRoom = function(roomCode){
     }
     renderLobby();
   }
-  function goOffline(why){
+  function goOffline(){
     if (NET.offline) return;
     NET.offline = true;
-    NET.offlineWhy = (why && (why.code || why.message)) ? String(why.code || '') + (why.message ? ' ' + String(why.message).slice(0, 80) : '') : (typeof why === 'string' ? why : '');
     NET.room = null;
     NET.broadcasting = false;
     if (NET.phase === 'lobby' || NET.seat === 1){ NET.seat = 1; myTeam = 0; NET.phase = NET.phase === 'lobby' ? 'lobby' : NET.phase; }
@@ -7026,7 +8806,7 @@ window.createPeerRoom = function(roomCode){
     const o1 = NET.offline ? null : seatOwnerPeer(1);
     const o2 = NET.offline ? null : seatOwnerPeer(2);
     if (NET.offline){
-      lobbyStatusEl.textContent = 'オンラインに接続できないため、ひとりで試すモードです。水色陣営は動きません。(通信環境を確認してページを開き直してください)' + (NET.offlineWhy ? ' [原因: ' + NET.offlineWhy + ']' : '');
+      lobbyStatusEl.textContent = 'オンラインに接続できないため、ひとりで試すモードです。水色陣営は動きません。';
       seatStateEls[1].textContent = 'あなた'; seatStateEls[1].className = 'seatState me';
       seatStateEls[2].textContent = '接続なし'; seatStateEls[2].className = 'seatState';
       seatBtnEls[1].disabled = true; seatBtnEls[2].disabled = true;
@@ -7055,33 +8835,12 @@ window.createPeerRoom = function(roomCode){
     }
     joinP2BtnEl.classList.toggle('hidden', !(NET.phase === 'playing' && !NET.offline && NET.room && NET.seat === 0 && !o2 && NET.hostPresent));
   }
-  // Room code lives in the URL (#r=xxxx) so the link itself is the invite.
-  const ROOM_CODE = (() => {
-    let code = '';
-    const m = /(?:^#|&)r=([a-z0-9]{4,24})/i.exec(location.hash || '');
-    if (m) code = m[1].toLowerCase();
-    if (!code){
-      const abc = 'abcdefghjkmnpqrstuvwxyz23456789';
-      for (let i = 0; i < 8; i++) code += abc[Math.floor(Math.random() * abc.length)];
-      try { history.replaceState(null, '', location.pathname + location.search + '#r=' + code); } catch (e){ location.hash = 'r=' + code; }
-    }
-    return code;
-  })();
-  const inviteUrlEl = document.getElementById('inviteUrl');
-  const copyInviteBtnEl = document.getElementById('copyInviteBtn');
-  const inviteUrl = location.origin + location.pathname + location.search + '#r=' + ROOM_CODE;
-  inviteUrlEl.value = inviteUrl;
-  inviteUrlEl.addEventListener('focus', () => inviteUrlEl.select());
-  copyInviteBtnEl.addEventListener('click', async () => {
-    let ok = false;
-    try { await navigator.clipboard.writeText(inviteUrl); ok = true; } catch (e){}
-    if (!ok){ try { inviteUrlEl.select(); ok = document.execCommand('copy'); } catch (e){} }
-    copyInviteBtnEl.textContent = ok ? 'コピー済み' : '長押しでコピー';
-    setTimeout(() => { copyInviteBtnEl.textContent = 'コピー'; }, 1800);
-  });
-  (function initNet(){
+  (async function initNet(){
     let room = null;
-    try { room = window.createPeerRoom(ROOM_CODE); } catch (e){ goOffline('接続の準備に失敗: ' + (e && e.message || '')); return; }
+    try {
+      if (typeof window.createP2PRoom === 'function') room = await window.createP2PRoom();
+    } catch (e){ room = null; }
+    if (!room){ goOffline(); return; }
     NET.room = room;
     let autoTried = false;
     room.onConnection((c) => {
@@ -7091,8 +8850,8 @@ window.createPeerRoom = function(roomCode){
         // Give everyone already here a moment to show up before reclaiming.
         setTimeout(() => { if (!NET.seat && NET.autoSeat) claimSeat(NET.autoSeat); }, 1500);
       }
-    }, (e) => goOffline(e));
-    room.onPeers((change) => onPeersChanged(change.peers), (e) => goOffline(e));
+    }, () => goOffline());
+    room.onPeers((change) => onPeersChanged(change.peers), () => goOffline());
     renderLobby();
   })();
   applySeatUi();
@@ -7202,6 +8961,7 @@ window.createPeerRoom = function(roomCode){
         updatePassiveRegen(dt, t);
         updatePoisonSystem(dt, t);
         updateLandmarks(t);
+        updateMoonMeteors();
       }
       updateScores(t);
       netHostTick(t);
@@ -7209,12 +8969,15 @@ window.createPeerRoom = function(roomCode){
       guestFrame(dt, t);
     }
     updateFloatingNumbers(dt);
+    updateCardCooldownDisplays(t);
     if (activePanel === 'spawnInfo' && t - lastSpawnInfoRefreshAt > 1000){
       buildSpawnInfoPanel();
       lastSpawnInfoRefreshAt = t;
     }
     updateMeteors(dt);
     updatePoisonVisuals(dt);
+    updateBVisuals(dt);
+    updatePillarEffects(dt);
     updateMatchUi(t);
     if (terrDirty){ terrTexture.needsUpdate = true; terrDirty = false; }
     if (glowDirty){ glowTexture.needsUpdate = true; glowDirty = false; }
