@@ -6994,15 +6994,96 @@
   const FIXED_ROOM_ID = 'territory-game-on-a-sphere-fixed-v1';
   const TRYSTERO_APP_ID = 'emishi34-territory-game-on-a-sphere-v1';
 
-  function makeGitHubRoom(mod){
+  // Trystero's current Nostr strategy supports multiple secure WebSocket relays.
+  // Using several relays makes peer discovery less dependent on one relay being
+  // temporarily unavailable or blocked on a particular network.
+  const NOSTR_RELAY_URLS = [
+    'wss://relay.damus.io',
+    'wss://relay.primal.net',
+    'wss://nos.lol',
+    'wss://relay.nostr.band'
+  ];
+
+  // Open Relay / Metered provides a public static-auth TURN endpoint.
+  // The shared secret is intentionally a public service secret; it is not a
+  // private account/API key. We derive a short-lived TURN username/credential
+  // in the browser so the WebRTC connection can fall back to TURN when direct
+  // P2P is impossible. Direct P2P is still preferred by WebRTC.
+  const PUBLIC_TURN_HOST = 'staticauth.openrelay.metered.ca';
+  const PUBLIC_TURN_SECRET = 'openrelayprojectsecret';
+
+  function base64FromBytes(bytes){
+    let binary = '';
+    const chunk = 0x8000;
+    for (let i = 0; i < bytes.length; i += chunk){
+      binary += String.fromCharCode(...bytes.subarray(i, i + chunk));
+    }
+    return btoa(binary);
+  }
+
+  async function makePublicTurnConfig(){
+    // TURN REST-style long-term credentials are username=expiry and
+    // credential=HMAC-SHA1(sharedSecret, username), base64 encoded.
+    const expiry = Math.floor(Date.now() / 1000) + 6 * 60 * 60;
+    const username = String(expiry);
+    try {
+      if (globalThis.crypto && crypto.subtle){
+        const key = await crypto.subtle.importKey(
+          'raw',
+          new TextEncoder().encode(PUBLIC_TURN_SECRET),
+          { name: 'HMAC', hash: 'SHA-1' },
+          false,
+          ['sign']
+        );
+        const sig = await crypto.subtle.sign(
+          'HMAC', key, new TextEncoder().encode(username)
+        );
+        const credential = base64FromBytes(new Uint8Array(sig));
+        return [{
+          urls: [
+            `turn:${PUBLIC_TURN_HOST}:80?transport=udp`,
+            `turn:${PUBLIC_TURN_HOST}:443?transport=udp`,
+            `turn:${PUBLIC_TURN_HOST}:80?transport=tcp`,
+            `turn:${PUBLIC_TURN_HOST}:443?transport=tcp`,
+            `turns:${PUBLIC_TURN_HOST}:443?transport=tcp`
+          ],
+          username,
+          credential
+        }];
+      }
+    } catch (e){
+      console.warn('[LineRunner3D] TURN credential generation failed:', e);
+    }
+    return [];
+  }
+
+  async function makeGitHubRoom(mod){
     const selfId = mod.selfId || ('local-' + Math.random().toString(36).slice(2));
+    const turnConfig = await makePublicTurnConfig();
+    const config = {
+      appId: TRYSTERO_APP_ID,
+      relayUrls: NOSTR_RELAY_URLS,
+      relayRedundancy: NOSTR_RELAY_URLS.length,
+      turnConfig,
+      // Faster initial ICE negotiation. Supported by current Trystero.
+      trickleIce: true
+    };
+
+    console.info('[LineRunner3D] Trystero config', {
+      version: '0.25.2',
+      roomId: FIXED_ROOM_ID,
+      nostrRelays: NOSTR_RELAY_URLS,
+      turnEnabled: turnConfig.length > 0
+    });
+
     const tr = mod.joinRoom(
-      { appId: TRYSTERO_APP_ID },
+      config,
       FIXED_ROOM_ID,
       {
         onJoinError(details){
           const e = details && details.error ? details.error : details;
-          NET.netError = 'P2P接続エラー: ' + ((e && e.message) || e || '不明');
+          const message = (e && e.message) || e || '不明';
+          NET.netError = 'P2P接続エラー: ' + message;
           console.error('[LineRunner3D] Trystero join error', details);
           renderLobby();
         }
@@ -7057,7 +7138,6 @@
       if (!peerId || peerId === selfId || !data || typeof data !== 'object') return;
       const patch = data.p && typeof data.p === 'object' ? data.p : {};
       const current = others.get(peerId) || {};
-      // f=1 is a full presence snapshot; normal packets are patches.
       others.set(peerId, data.f ? Object.assign({}, patch) : Object.assign({}, current, patch));
       emitPeers();
     };
@@ -7076,8 +7156,6 @@
 
     tr.onPeerJoin = handleJoin;
     tr.onPeerLeave = handleLeave;
-    // Trystero 0.25 replays existing peers when onPeerJoin is assigned, so
-    // the handler above also covers a browser joining a room that is already live.
 
     started = true;
     setTimeout(() => {
@@ -7112,14 +7190,14 @@
   (async function initNet(){
     let room = null, why = '';
     const sources = [
-      'https://cdn.jsdelivr.net/npm/trystero@0.25.0/+esm',
-      'https://esm.sh/trystero@0.25.0'
+      'https://cdn.jsdelivr.net/npm/trystero@0.25.2/+esm',
+      'https://esm.sh/trystero@0.25.2'
     ];
     for (const src of sources){
       try {
         const mod = await import(src);
         if (mod && typeof mod.joinRoom === 'function'){
-          room = makeGitHubRoom(mod);
+          room = await makeGitHubRoom(mod);
           break;
         }
       } catch (e){
